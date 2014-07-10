@@ -1,0 +1,18 @@
+		energy_spectra
+
+Takes a cross-correlation function table and writes multiple energy spectra from it (per 
+phase bin).
+
+CONTENTS:
+
+energyspec.py -- Takes CCF amplitudes of a specific time bin and writes them to a file.
+
+ratio_spectrum.py -- Computes the energy spectrum as a ratio with the mean flux or count 
+rate.
+
+run_energyspec.sh -- Bash script to run energyspec.py.
+
+
+
+
+THIS CODE COMES WITH NO LEGAL GUARANTEES.

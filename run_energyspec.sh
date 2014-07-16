@@ -26,7 +26,7 @@ numsec=$4
 obsID=$(head -1 $obsID_list)
 filt_loc=1
 
-in_file="$in_dir/out_ccf/${propID}_${day}_t${dt}_${numsec}sec.dat"
+ccf_file="$in_dir/out_ccf/${propID}_${day}_t${dt}_${numsec}sec.dat"
 data_dir="$home_dir/Reduced_data/$propID/$obsID"
 # rsp_matrix="$data_dir/PCU2.rsp"
 rsp_matrix="$out_dir/${propID}_${day}_${obsID}_PCU2.rsp"
@@ -43,8 +43,8 @@ elif [ -e "$data_dir/event.pha" ] && [ -e "${quaternions}" ]; then
 else
 	echo -e "\n\t $data_dir/event.pha and/or ${quaternions} do NOT exist. pcarsp was NOT run.\n"
 fi
-if [ -e "$in_file" ]; then
-	obs_time=$(python -c "from tools import read_obs_time; print read_obs_time('$in_file')")
+if [ -e "$ccf_file" ]; then
+	obs_time=$(python -c "from tools import read_obs_time; print read_obs_time('$ccf_file')")
 	echo "OBS TIME =" $obs_time "seconds"
 else
 	obs_time = 0
@@ -66,7 +66,10 @@ for obsID in $(cat $obsID_list); do
  		echo "$spec_file" >> $spectra_list
  	fi
 done
-python "$exe_dir"/mean_spectrum.py -i "$spectra_list" -o out.dat -c "$in_file"
+
+## Mean spectrum
+ccf_plus_mean="$out_dir/${propID}_${day}_t${dt}_${numsec}sec_ccfspec"
+python "$exe_dir"/mean_spectrum.py -i "$spectra_list" -o "${ccf_plus_mean}.${tab_ext}" -c "$ccf_file"
 
 
 ## Generating energy spectra at each phase bin
@@ -75,38 +78,40 @@ for pbin in {25..25}; do
 	out_end="${propID}_${day}_t${dt}_${numsec}sec_pbin_${pbin}"
 	out_file="$out_dir/$out_end"
 
-# 	if [ -e "$in_file" ]; then
-# 		python "$exe_dir"/energyspec.py -i "$in_file" -o "${out_file}.${tab_ext}" -b "$pbin" -f "$filt_loc"
-# 	else
-# 		echo -e "\n\t $in_file does not exist, energyspec.py was NOT run.\n"
-# 	fi
-# 	
-# 	pwd
-# 	if [ -e "$rsp_matrix" ] && [ -e "${out_file}.${tab_ext}" ]; then
-# 		
-# 		cd "$out_dir"
-# 			ascii2pha infile="${out_end}.${tab_ext}" \
-# 			outfile="${out_end}.pha" \
-# 			chanpres=no \
-# 			dtype=2 \
-# 			qerror=yes \
-# 			rows=- \
-# 			fchan=0 \
-# 			tlmin=0 \
-# 			detchans=64 \
-# 			telescope=RXTE \
-# 			instrume=PCA \
-# 			detnam=PCU2 \
-# 			filter=NONE \
-# 			exposure=$obs_time \
-# 			clobber=yes \
-# 			respfile="$rsp_matrix"
-# 		echo "XSPEC data: ${out_file}.pha"
-# 		echo -e "XSPEC resp: $rsp_matrix\n"
-# 	else
-# 		echo -e "\n\t${rsp_matrix} and/or ${out_file}.${tab_ext} do NOT exist, ascii2pha was NOT run.\n"
-# 	fi
+	if [ -e "${ccf_plus_mean}.${tab_ext}" ]; then
+		python "$exe_dir"/energyspec.py -i "${ccf_plus_mean}.${tab_ext}" -o "${out_file}.${tab_ext}" -b "$pbin" -f "$filt_loc"
+	else
+		echo -e "\n\t ${ccf_plus_mean}.${tab_ext} does not exist, energyspec.py was NOT run.\n"
+	fi
 	
+	pwd
+	if [ -e "$rsp_matrix" ] && [ -e "${out_file}.${tab_ext}" ]; then
+		
+		cd "$out_dir"
+			ascii2pha infile="${out_end}.${tab_ext}" \
+			outfile="${out_end}.pha" \
+			chanpres=no \
+			dtype=2 \
+			qerror=yes \
+			rows=- \
+			fchan=0 \
+			tlmin=0 \
+			detchans=64 \
+			telescope=RXTE \
+			instrume=PCA \
+			detnam=PCU2 \
+			filter=NONE \
+			exposure=$obs_time \
+			clobber=yes \
+			respfile="$rsp_matrix"
+		echo "XSPEC data: ${out_file}.pha"
+		echo -e "XSPEC resp: $rsp_matrix\n"
+	else
+		echo -e "\n\t${rsp_matrix} and/or ${out_file}.${tab_ext} do NOT exist, ascii2pha was NOT run.\n"
+	fi
+
+## For running ratio_spectrum
+
 # 	if [ -e "${out_file}.${tab_ext}" ]; then
 # 		python "$exe_dir"/ratio_spectrum.py "${out_file}.${tab_ext}" "$obsID_list" "${out_file}_rwm.${tab_ext}"
 # 	else

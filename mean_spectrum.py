@@ -18,14 +18,15 @@ in the Anaconda package, https://store.continuum.io/cshop/anaconda/
 
 """
 ###############################################################################
-def output(out_file, newtemp):
+def output(out_file, bins, out_tab):
 	"""
 			output
 	
 	
 	
 	Passed: out_file
-			newtemp
+			bins
+			out_tab
 			
 	Returns: nothing
 			
@@ -33,7 +34,17 @@ def output(out_file, newtemp):
 	
 	print "Output sent to %s" % out_file
 
-	np.savetxt(out_file, newtemp)
+	with open(out_file, 'w') as out:
+		out.write("# ")
+		for j in xrange(0, len(bins)):
+			out.write("\n%d" % bins[j])
+			for i in xrange(0, 64):
+				out.write("\t%.6f" % out_tab[j][i])
+	# 		for i in xrange(0, 64):
+	# 			out.write("\t%.5f" % ccf_error[j][i].real)
+	
+		## End of for-loops
+	## End of with-block
 			
 
 ## End of function 'output'
@@ -86,19 +97,18 @@ def main(in_file_list, ccf_file, out_file):
 	ccf_table = np.loadtxt(ccf_file, comments='#')
 	print "Shape of ccf table:", np.shape(ccf_table)
 	
-	bins = ccf_table[:,0]
+	bins = ccf_table[:,0].astype(int)
 	ccf_amps = ccf_table[:,1:65]
 	ccf_errs = ccf_table[:,66:]
 	print "Shape of ccf amps:", np.shape(ccf_amps)
 # 	print "CCF elt:", ccf_amps[1,0]
 	
-	new_temp = np.add(ccf_amps, total_countrate)
-	print "Shape of mean spectra + ccf:", np.shape(new_temp)
+	out_tab = np.add(ccf_amps, total_countrate)
+	print "Shape of mean spectra + ccf:", np.shape(out_tab)
 # 	print "newtemp elt:", new_temp[1,0]
 	
-
 	
-	output(out_file, new_temp)
+	output(out_file, bins, out_tab)
 
 ## End of function 'main'
 

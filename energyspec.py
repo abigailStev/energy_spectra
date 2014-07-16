@@ -1,13 +1,12 @@
 import argparse
-import math
 import numpy as np
-from scipy import fftpack
 import itertools
 
 """
 		energyspec.py
 
-Takes CCF amplitudes+mean energy spectrum of a specific time bin and writes them to a file.
+Takes CCF amplitudes+mean energy spectrum of a specific time bin and writes them
+to a file.
 
 Written in Python 2.7 by A.L. Stevens, A.L.Stevens@uva.nl, 2014
 
@@ -36,7 +35,7 @@ def output(in_file, out_file, bin_num, filt_ccf_amps):
 
 	with open(out_file, 'w') as out:
 		for item in filt_ccf_amps:
-			out.write("%.5f\t%.8f\n" % (item, math.fabs(item*0.1)))
+			out.write("%.5f\t%.8f\n" % (item, np.absolute(item*0.1)))
 
 	## End of function 'output'
 
@@ -60,10 +59,9 @@ def main(in_file, out_file, bin_num, filt_loc):
 	
 	"""
 	assert bin_num >= 0
-
+# 	bin_num = -1
 	ccf_amps = np.zeros(128, dtype=float)
 
-	## Reading only the first line of data to get the start time of the file
 	with open(in_file, 'r') as f:
 		for line in f:
 			if line[0].strip() != "#":
@@ -74,10 +72,11 @@ def main(in_file, out_file, bin_num, filt_loc):
 					for i in range (0, 128):
 						ccf_amps[i] = float(line[i+1])
 					break
-		print "\n\tERROR: Bin not found. Check that it is within the range of \
-			the file. Exiting."
-		exit()
+		else:
+			print "\n\tERROR: Phase bin not found. Check that it is within the range of the file. Exiting."
+			exit()
 	## End of with-block
+	
 	
 	if filt_loc == 1:
 		filt_ccf_amps = ccf_amps[0:64]

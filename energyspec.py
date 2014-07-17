@@ -15,33 +15,54 @@ in the Anaconda package, https://store.continuum.io/cshop/anaconda/
 
 """
 ###############################################################################
-def output(in_file, out_file, bin_num, ccf_amps_and_err):
+def output(out_file, bin_num, ccf_amps, ccf_err):
 	"""
 			output
 	
 	Writes the energy spectrum to a file. This output file is then used as input 
 	for the FTOOLS script ascii2pha.
 	
-	Passed: in_file - Name of input file with CCF amplitudes per energy bin.
-			out_file - Name of output file to write energy spectrum to.
+	Passed: out_file - Name of output file to write energy spectrum to.
 			bin_num - The CCF phase bin to get energy spectrum for.
-			ccf_amps_and_err - CCF amplitude and error per energy bin
+			ccf_amps - CCF amplitude per energy bin
+			ccf_err - CCF error per energy bin
 			
 	Returns: nothing
 			
 	"""
 	pass
 	
-	ccf_amps = ccf_amps_and_err[0:64]
-	ccf_err = ccf_amps_and_err[65:128]
-	
 	print "Output sent to %s" % out_file
 	
 	with open(out_file, 'w') as out:
-		for a,b in zip(ccf_amps, ccf_err):
-			out.write("%.6e\t%.6e\n" % (a,b))
-
+		for i in xrange(0, 64):
+# 			out.write("%d\t%.6e\t%.6e\n" % (i, ccf_amps[i], ccf_err[i]))
+			out.write("%d\t%.6e\t%.6e\n" % (i, ccf_amps[i], ccf_amps[i]*.1))
+	## End of with-block
+	
 ## End of function 'output'
+
+
+###############################################################################
+def get_mean_count_rate(string):
+	"""
+			get_mean_count_rate
+	
+	Passed: string - The comment line from the ccf file with mean rate per 
+				energy channel.
+	
+	Returns: an array of the mean rates per energy channel
+	
+	"""
+	pass
+	
+# 	print string
+	start_index = string.index('[')
+# 	print start_index
+# 	print string[start_index+1:-1]
+	return np.asarray(string[start_index+1:-1].split(', '), dtype=np.float64)
+
+## End of 'get_mean_count_rate'	
 
 
 ###############################################################################
@@ -52,35 +73,47 @@ def main(in_file, out_file, bin_num):
 	Finds the time bin desired, gets the filtered CCF amplitudes, sends to 
 	output.
 	
-	Passed: in_file_list - Name of input file with CCF amplitudes per energy 
-				bin.
+	Passed: in_file - Name of input file with CCF amplitudes per energy bin.
 			out_file - Name of output file to write energy spectrum to.
 			bin_num - The CCF phase bin to get energy spectrum for.
 
 	Returns: nothing
 	
 	"""
+	pass
 	assert bin_num >= 0
 # 	bin_num = -1
 	ccf_amps_and_err = np.zeros(128, dtype=float)
+	mean_count_rate = np.zeros(64)
 
 	with open(in_file, 'r') as f:
 		for line in f:
+			
 			if line[0].strip() != "#":
 # 				print line
 				line = line.strip().split()
 				if int(line[0]) == bin_num:
 # 					print "Bin found!"
-					print len(line)
-					for i in range (0, 128):
+					for i in xrange(0, 128):
 						ccf_amps_and_err[i] = float(line[i+1])
 					break
+			else:
+				if "Mean count rate of ci" in line.strip():
+					mean_count_rate = get_mean_count_rate(line.strip())
 		else:
 			print "\n\tERROR: Phase bin not found. Check that it is within the range of the file. Exiting."
 			exit()
 	## End of with-block
-
-	output(in_file, out_file, bin_num, ccf_amps_and_err)
+	
+	ccf_amps = ccf_amps_and_err[0:64]
+	ccf_err = ccf_amps_and_err[64:128]
+	
+# 	print np.shape(ccf_amps)
+# 	print ccf_amps
+	ccf_amps = np.add(ccf_amps, mean_count_rate) 
+# 	print np.shape(ccf_amps)
+# 	print ccf_amps
+	output(out_file, bin_num, ccf_amps, ccf_err)
 
 ## End of function 'main'
 

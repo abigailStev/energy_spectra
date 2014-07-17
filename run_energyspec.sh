@@ -12,7 +12,7 @@ exe_dir="$home_dir/Dropbox/Research/energy_spectra"
 out_dir="$exe_dir/out_es"
 script_dir="$home_dir/Dropbox/Scripts"
 day=$(date +%y%m%d)  # make the date a string and assign it to 'day'
-day="140715"
+# day="140715"
 
 if [ ! -d "$out_dir" ]; then
 	mkdir -p "$out_dir"
@@ -24,7 +24,6 @@ dt=$3
 numsec=$4
 
 obsID=$(head -1 $obsID_list)
-filt_loc=1
 
 ccf_file="$in_dir/out_ccf/${propID}_${day}_t${dt}_${numsec}sec.dat"
 data_dir="$home_dir/Reduced_data/$propID/$obsID"
@@ -52,7 +51,7 @@ else
 fi
 
 ## Making file with list of event.pha spectra
-spectra_list="$out_dir/${propID}_${day}_t${dt}_${numsec}sec_spectra.lst"
+spectra_list="$out_dir/${propID}_${day}_t${dt}_${numsec}sec_evtspectra.lst"
 if [ -e "$spectra_list" ]; then
 	rm "$spectra_list"
 fi
@@ -79,7 +78,7 @@ for pbin in {25..25}; do
 	out_file="$out_dir/$out_end"
 
 	if [ -e "${ccf_plus_mean}.${tab_ext}" ]; then
-		python "$exe_dir"/energyspec.py -i "${ccf_plus_mean}.${tab_ext}" -o "${out_file}.${tab_ext}" -b "$pbin" -f "$filt_loc"
+		python "$exe_dir"/energyspec.py -i "${ccf_plus_mean}.${tab_ext}" -o "${out_file}.${tab_ext}" -b "$pbin"
 	else
 		echo -e "\n\t ${ccf_plus_mean}.${tab_ext} does not exist, energyspec.py was NOT run.\n"
 	fi

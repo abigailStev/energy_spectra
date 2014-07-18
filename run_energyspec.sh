@@ -51,34 +51,34 @@ else
 fi
 
 ## Making file with list of event.pha spectra
-spectra_list="$out_dir/${propID}_${day}_t${dt}_${numsec}sec_evtspectra.lst"
-if [ -e "$spectra_list" ]; then
-	rm "$spectra_list"
-fi
-touch "$spectra_list"
-echo "$spectra_list"
-
-for obsID in $(cat $obsID_list); do
-	spec_file="$home_dir/Reduced_data/$propID/$obsID/event.pha"
-# 	echo "$spec_file"
-	if [ -e "$spec_file" ]; then
- 		echo "$spec_file" >> $spectra_list
- 	fi
-done
-
-## Mean spectrum
-ccf_plus_mean="$out_dir/${propID}_${day}_t${dt}_${numsec}sec_ccfspec"
-python "$exe_dir"/mean_spectrum.py -i "$spectra_list" -o "${ccf_plus_mean}.${tab_ext}" -c "$ccf_file"
+# spectra_list="$out_dir/${propID}_${day}_t${dt}_${numsec}sec_evtspectra.lst"
+# if [ -e "$spectra_list" ]; then
+# 	rm "$spectra_list"
+# fi
+# touch "$spectra_list"
+# echo "$spectra_list"
+# 
+# for obsID in $(cat $obsID_list); do
+# 	spec_file="$home_dir/Reduced_data/$propID/$obsID/event.pha"
+# # 	echo "$spec_file"
+# 	if [ -e "$spec_file" ]; then
+#  		echo "$spec_file" >> $spectra_list
+#  	fi
+# done
+# ## Mean spectrum
+# ccf_plus_mean="$out_dir/${propID}_${day}_t${dt}_${numsec}sec_ccfspec"
+# python "$exe_dir"/mean_spectrum.py -i "$spectra_list" -o "${ccf_plus_mean}.${tab_ext}" -c "$ccf_file"
 
 
 ## Generating energy spectra at each phase bin
-for pbin in {25..25}; do
-
-	out_end="${propID}_${day}_t${dt}_${numsec}sec_pbin_${pbin}"
+# for tbin in {25..40..5}; do  ## should work in bash 4.*, but i have 3.2.*
+for (( tbin=25; tbin<=40; tbin+=5 )); do
+# 	echo "$tbin"
+	out_end="${propID}_${day}_t${dt}_${numsec}sec_pbin_${tbin}"
 	out_file="$out_dir/$out_end"
 
-	if [ -e "${ccf_plus_mean}.${tab_ext}" ]; then
-		python "$exe_dir"/energyspec.py -i "${ccf_plus_mean}.${tab_ext}" -o "${out_file}.${tab_ext}" -b "$pbin"
+	if [ -e "${ccf_file}" ]; then
+		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_file}.${tab_ext}" -b "$tbin"
 	else
 		echo -e "\n\t ${ccf_plus_mean}.${tab_ext} does not exist, energyspec.py was NOT run.\n"
 	fi
@@ -89,13 +89,13 @@ for pbin in {25..25}; do
 		cd "$out_dir"
 			ascii2pha infile="${out_end}.${tab_ext}" \
 			outfile="${out_end}.pha" \
-			chanpres=no \
+			chanpres=yes \
 			dtype=2 \
 			qerror=yes \
 			rows=- \
-			fchan=0 \
 			tlmin=0 \
 			detchans=64 \
+			pois=no \
 			telescope=RXTE \
 			instrume=PCA \
 			detnam=PCU2 \

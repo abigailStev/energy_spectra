@@ -87,8 +87,7 @@ def main(in_file, out_file, bin_num):
 	mean_count_rate = np.zeros(64)
 
 	with open(in_file, 'r') as f:
-		for line in f:
-			
+		for line in f:	
 			if line[0].strip() != "#":
 # 				print line
 				line = line.strip().split()
@@ -98,7 +97,9 @@ def main(in_file, out_file, bin_num):
 						ccf_amps_and_err[i] = float(line[i+1])
 					break
 			else:
-				if "Mean count rate of ci" in line.strip():
+				if "Mean" in line.strip() and \
+					"count rate" in line.strip() and \
+					"ci" in line.strip():
 					mean_count_rate = get_mean_count_rate(line.strip())
 		else:
 			print "\n\tERROR: Phase bin not found. Check that it is within the range of the file. Exiting."

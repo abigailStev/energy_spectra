@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import itertools
+from tools import read_obs_time
 
 """
 		energyspec.py
@@ -15,7 +16,7 @@ in the Anaconda package, https://store.continuum.io/cshop/anaconda/
 
 """
 ###############################################################################
-def output(out_file, bin_num, ccf_amps, ccf_err):
+def output(out_file, bin_num, amps, err):
 	"""
 			output
 	
@@ -24,8 +25,8 @@ def output(out_file, bin_num, ccf_amps, ccf_err):
 	
 	Passed: out_file - Name of output file to write energy spectrum to.
 			bin_num - The CCF phase bin to get energy spectrum for.
-			ccf_amps - CCF amplitude per energy bin
-			ccf_err - CCF error per energy bin
+			amps - Amplitude per energy bin
+			err - Error per energy bin
 			
 	Returns: nothing
 			
@@ -36,8 +37,8 @@ def output(out_file, bin_num, ccf_amps, ccf_err):
 	
 	with open(out_file, 'w') as out:
 		for i in xrange(0, 64):
-# 			out.write("%d\t%.6e\t%.6e\n" % (i, ccf_amps[i], ccf_err[i]))
-			out.write("%d\t%.6e\t%.6e\n" % (i, ccf_amps[i], ccf_amps[i]*.1))
+			out.write("%d\t%.6e\t%.6e\n" % (i, amps[i], err[i]))
+# 			out.write("%d\t%.6e\t%.6e\n" % (i, amps[i], amps[i]*.1))
 	## End of with-block
 	
 ## End of function 'output'
@@ -83,8 +84,8 @@ def main(in_file, out_file, bin_num):
 	pass
 	assert bin_num >= 0
 # 	bin_num = -1
-	ccf_amps_and_err = np.zeros(128, dtype=float)
-	mean_count_rate = np.zeros(64)
+	ccf_amps_and_err = np.zeros(128, dtype=np.float64)
+	mean_count_rate = np.zeros(64, dtype=np.int32)
 
 	with open(in_file, 'r') as f:
 		for line in f:	
@@ -109,12 +110,18 @@ def main(in_file, out_file, bin_num):
 	ccf_amps = ccf_amps_and_err[0:64]
 	ccf_err = ccf_amps_and_err[64:128]
 	
+	obs_time = read_obs_time(in_file)
+	mean_err = np.sqrt(mean_count_rate * obs_time) / obs_time
 # 	print np.shape(ccf_amps)
 # 	print ccf_amps
-	ccf_amps = np.add(ccf_amps, mean_count_rate) 
-# 	print np.shape(ccf_amps)
-# 	print ccf_amps
-	output(out_file, bin_num, ccf_amps, ccf_err)
+
+# 	amps = np.add(ccf_amps, mean_count_rate) 
+	amps = mean_count_rate
+	
+# 	err = np.sqrt(np.add(np.square(ccf_err), np.square(mean_err)))
+	err = mean_err
+
+	output(out_file, bin_num, amps, err)
 
 ## End of function 'main'
 

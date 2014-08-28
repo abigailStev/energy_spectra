@@ -11,8 +11,8 @@ in_dir="$home_dir/Dropbox/Research/cross_correlation"
 exe_dir="$home_dir/Dropbox/Research/energy_spectra"
 out_dir="$exe_dir/out_es"
 script_dir="$home_dir/Dropbox/Scripts"
-day=$(date +%y%m%d)  # make the date a string and assign it to 'day'
-# day="140715"
+# day=$(date +%y%m%d)  # make the date a string and assign it to 'day'
+day="140826"
 
 if [ ! -d "$out_dir" ]; then
 	mkdir -p "$out_dir"
@@ -80,7 +80,7 @@ for (( tbin=25; tbin<=40; tbin+=5 )); do
 	if [ -e "${ccf_file}" ]; then
 		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_file}.${tab_ext}" -b "$tbin"
 	else
-		echo -e "\n\t ${ccf_plus_mean}.${tab_ext} does not exist, energyspec.py was NOT run.\n"
+		echo -e "\n\t ${ccf_file}.${tab_ext} does not exist, energyspec.py was NOT run.\n"
 	fi
 	
 	pwd

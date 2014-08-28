@@ -7,12 +7,13 @@ CONTENTS:
 
 energyspec.py -- Takes CCF amplitudes of a specific time bin and writes them to a file.
 
-ratio_spectrum.py -- Computes the energy spectrum as a ratio with the mean flux or count 
-rate.
+mean_spectrum.sh -- Makes a spectrum from all the event-mode data files for a propID. Use this over mean_spectrum.PY.
 
 run_energyspec.sh -- Bash script to run energyspec.py.
 
 
+OLD:
+ratio_spectrum.py
+mean_spectrum.py
 
-
-THIS CODE COMES WITH NO LEGAL GUARANTEES.
+THIS CODE COMES WITH NO GUARANTEES.

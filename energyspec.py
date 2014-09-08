@@ -108,6 +108,7 @@ def main(in_file, out_file, bin_num):
 	## End of with-block
 	
 	ccf_amps = ccf_amps_and_err[0:64]
+# 	print ccf_amps
 	ccf_err = ccf_amps_and_err[64:128]
 	
 	obs_time = read_obs_time(in_file)
@@ -117,6 +118,7 @@ def main(in_file, out_file, bin_num):
 
 # 	amps = np.add(ccf_amps, mean_count_rate) 
 	amps = mean_count_rate
+# 	print mean_count_rate[20:23]
 	
 # 	err = np.sqrt(np.add(np.square(ccf_err), np.square(mean_err)))
 	err = mean_err

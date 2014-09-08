@@ -11,8 +11,9 @@ in_dir="$home_dir/Dropbox/Research/cross_correlation"
 exe_dir="$home_dir/Dropbox/Research/energy_spectra"
 out_dir="$exe_dir/out_es"
 script_dir="$home_dir/Dropbox/Scripts"
-# day=$(date +%y%m%d)  # make the date a string and assign it to 'day'
-day="140826"
+day=$(date +%y%m%d)  # make the date a string and assign it to 'day'
+# day="140904"
+dump_file=dum.dat # Name of dumping file for intermediary steps
 
 if [ ! -d "$out_dir" ]; then
 	mkdir -p "$out_dir"
@@ -22,10 +23,14 @@ propID=$1
 obsID_list=$2
 dt=$3
 numsec=$4
+testing=$5
 
 obsID=$(head -1 $obsID_list)
 
 ccf_file="$in_dir/out_ccf/${propID}_${day}_t${dt}_${numsec}sec.dat"
+if (( testing==1 )); then
+	ccf_file="$in_dir/out_ccf/test_${propID}_${day}_t${dt}_${numsec}sec.dat"
+fi
 data_dir="$home_dir/Reduced_data/$propID/$obsID"
 # rsp_matrix="$data_dir/PCU2.rsp"
 rsp_matrix="$out_dir/${propID}_${day}_${obsID}_PCU2.rsp"
@@ -44,7 +49,8 @@ else
 fi
 if [ -e "$ccf_file" ]; then
 	obs_time=$(python -c "from tools import read_obs_time; print read_obs_time('$ccf_file')")
-	echo "OBS TIME =" $obs_time "seconds"
+	echo "PIPELINE EXPOSURE TIME =" $obs_time "s"
+	echo `echo "$obs_time / 16.0" | bc -l`
 else
 	obs_time = 0
 	echo -e "\n\t Couldn't get observation time from header, set obs_time to zero.\n"
@@ -80,14 +86,13 @@ for (( tbin=25; tbin<=40; tbin+=5 )); do
 	if [ -e "${ccf_file}" ]; then
 		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_file}.${tab_ext}" -b "$tbin"
 	else
-		echo -e "\n\t ${ccf_file}.${tab_ext} does not exist, energyspec.py was NOT run.\n"
+		echo -e "\n\t ${ccf_file} does not exist, energyspec.py was NOT run.\n"
 	fi
 	
-	pwd
 	if [ -e "$rsp_matrix" ] && [ -e "${out_file}.${tab_ext}" ]; then
 		
 		cd "$out_dir"
-			ascii2pha infile="${out_end}.${tab_ext}" \
+		ascii2pha infile="${out_end}.${tab_ext}" \
 			outfile="${out_end}.pha" \
 			chanpres=yes \
 			dtype=2 \
@@ -101,12 +106,16 @@ for (( tbin=25; tbin<=40; tbin+=5 )); do
 			detnam=PCU2 \
 			filter=NONE \
 			exposure=$obs_time \
-			clobber=yes \
-			respfile="$rsp_matrix"
+			clobber=yes > $dump_file
+			#\
+			#respfile="$rsp_matrix"
 		echo "XSPEC data: ${out_file}.pha"
 		echo -e "XSPEC resp: $rsp_matrix\n"
 	else
 		echo -e "\n\t${rsp_matrix} and/or ${out_file}.${tab_ext} do NOT exist, ascii2pha was NOT run.\n"
+	fi
+	if [ ! -e "${out_end}.pha" ]; then
+		echo -e "\n\tERROR: ASCII2pha didn't run, ${out_end}.pha does not exist.\n"
 	fi
 
 ## For running ratio_spectrum

@@ -50,7 +50,7 @@ fi
 if [ -e "$ccf_file" ]; then
 	obs_time=$(python -c "from tools import read_obs_time; print read_obs_time('$ccf_file')")
 	echo "PIPELINE EXPOSURE TIME =" $obs_time "s"
-	echo `echo "$obs_time / 16.0" | bc -l`
+# 	echo `echo "$obs_time / 16.0" | bc -l`
 else
 	obs_time = 0
 	echo -e "\n\t Couldn't get observation time from header, set obs_time to zero.\n"

@@ -98,53 +98,53 @@ run_log="run.log"
 #############################################################
 ## Making an event-mode spectrum for all files in the propID
 #############################################################
+pwd
+seextrct infile=@"$all_evt" \
+	maxmiss=INDEF \
+	gtiorfile=- \
+	gtiandfile="$all_gti" \
+	outroot="$out_dir/all_evt" \
+	bitfile="$list_dir"/bitfile_evt_PCU2 \
+	timecol="TIME" \
+	columns="Event" \
+	multiple=yes \
+	binsz=1 \
+	printmode=BOTH \
+	lcmode=RATE \
+	spmode=SUM \
+	timemin=INDEF \
+	timemax=INDEF \
+	timeint=INDEF \
+	chmin=INDEF \
+	chmax=INDEF \
+	chint=INDEF \
+	chbin=INDEF \
+	mode=ql > run.log
+	
+if [ -e $dump_file ]; then
+	rm -f $dump_file
+fi
 
-# seextrct infile=@"$all_evt" \
-# 	maxmiss=INDEF \
-# 	gtiorfile=- \
-# 	gtiandfile="$all_gti" \
-# 	outroot="$out_dir/all_evt" \
-# 	bitfile="$list_dir"/bitfile_evt_PCU2 \
-# 	timecol="TIME" \
-# 	columns="Event" \
-# 	multiple=yes \
-# 	binsz=1 \
-# 	printmode=BOTH \
-# 	lcmode=RATE \
-# 	spmode=SUM \
-# 	timemin=INDEF \
-# 	timemax=INDEF \
-# 	timeint=INDEF \
-# 	chmin=INDEF \
-# 	chmax=INDEF \
-# 	chint=INDEF \
-# 	chbin=INDEF \
-# 	mode=ql > run.log
-# 	
-# if [ -e $dump_file ]; then
-# 	rm -f $dump_file
-# fi
-# 
-# if [ ! -e "$out_dir/all_evt.pha" ]; then
-# 	echo -e "\n\tERROR: $out_dir/all_evt.pha not made!\n"
-# fi
-# 
-# rsp_matrix="$out_dir/all_PCU2.rsp"
-# first_obsID=$(cat $obsID_list | head -n 1)
-# # echo "$first_obsID"
-# quaternions="$out_dir/$first_obsID/appx_quat.fits"
-# 
-# 
-# if [ -e "$rsp_matrix" ]; then
-# 	echo "$rsp_matrix already exists."
-# elif [ -e "$out_dir/all_evt.pha" ] && [ -e "${quaternions}" ]; then
-# 	pcarsp -f "$out_dir/all_evt.pha" -a "${quaternions}" -l all -j y -p 2 -m n -n "$rsp_matrix"
-# else
-# 	echo -e "\n\t $data_dir/event.pha and/or ${quaternions} do NOT exist. pcarsp was NOT run.\n"
-# fi
-# 
-# # python "$script_dir/plot_evt_lc.py" "$propID" "$out_dir/all_evt.lc" lc_plot.png
-# 
-# seextrct_exposure=$(python -c "from tools import get_key_val; print get_key_val('$out_dir/all_evt.pha',1,'EXPOSURE')")
-# echo "SEEXTRCT EXPOSURE TIME: $seextrct_exposure s"
-# echo `echo "$seextrct_exposure / 16.0" | bc -l`
+if [ ! -e "$out_dir/all_evt.pha" ]; then
+	echo -e "\n\tERROR: $out_dir/all_evt.pha not made!\n"
+fi
+
+rsp_matrix="$out_dir/all_PCU2.rsp"
+first_obsID=$(cat $obsID_list | head -n 1)
+# echo "$first_obsID"
+quaternions="$out_dir/$first_obsID/appx_quat.fits"
+
+
+if [ -e "$rsp_matrix" ]; then
+	echo "$rsp_matrix already exists."
+elif [ -e "$out_dir/all_evt.pha" ] && [ -e "${quaternions}" ]; then
+	pcarsp -f "$out_dir/all_evt.pha" -a "${quaternions}" -l all -j y -p 2 -m n -n "$rsp_matrix"
+else
+	echo -e "\n\t $data_dir/event.pha and/or ${quaternions} do NOT exist. pcarsp was NOT run.\n"
+fi
+
+# python "$script_dir/plot_evt_lc.py" "$propID" "$out_dir/all_evt.lc" lc_plot.png
+
+seextrct_exposure=$(python -c "from tools import get_key_val; print get_key_val('$out_dir/all_evt.pha',1,'EXPOSURE')")
+echo "SEEXTRCT EXPOSURE TIME: $seextrct_exposure s"
+echo `echo "$seextrct_exposure / 16.0" | bc -l`

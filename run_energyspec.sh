@@ -106,9 +106,8 @@ for (( tbin=25; tbin<=40; tbin+=5 )); do
 			detnam=PCU2 \
 			filter=NONE \
 			exposure=$obs_time \
-			clobber=yes > $dump_file
-			#\
-			#respfile="$rsp_matrix"
+			clobber=yes \
+			respfile="$rsp_matrix" > $dump_file
 		echo "XSPEC data: ${out_file}.pha"
 		echo -e "XSPEC resp: $rsp_matrix\n"
 	else

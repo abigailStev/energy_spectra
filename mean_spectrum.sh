@@ -147,4 +147,4 @@ fi
 
 seextrct_exposure=$(python -c "from tools import get_key_val; print get_key_val('$out_dir/all_evt.pha',1,'EXPOSURE')")
 echo "SEEXTRCT EXPOSURE TIME: $seextrct_exposure s"
-echo `echo "$seextrct_exposure / 16.0" | bc -l`
+# echo `echo "$seextrct_exposure / 16.0" | bc -l`

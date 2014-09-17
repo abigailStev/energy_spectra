@@ -116,12 +116,14 @@ def main(in_file, out_file, bin_num):
 # 	print np.shape(ccf_amps)
 # 	print ccf_amps
 
-# 	amps = np.add(ccf_amps, mean_count_rate) 
-	amps = mean_count_rate
+	amps = np.add(ccf_amps, mean_count_rate) 
+# 	amps = mean_count_rate
+# 	amps = ccf_amps
 # 	print mean_count_rate[20:23]
 	
-# 	err = np.sqrt(np.add(np.square(ccf_err), np.square(mean_err)))
-	err = mean_err
+	err = np.sqrt(np.add(np.square(ccf_err), np.square(mean_err)))
+# 	err = mean_err
+# 	err = ccf_err
 
 	output(out_file, bin_num, amps, err)
 

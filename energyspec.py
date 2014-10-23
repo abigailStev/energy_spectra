@@ -7,7 +7,8 @@ from tools import read_obs_time
 		energyspec.py
 
 Takes CCF amplitudes+mean energy spectrum of a specific time bin and writes them
-to a file.
+to a file. Can indicate whether to produce spectra that are mean+ccf, ccf, or 
+mean.
 
 Written in Python 2.7 by A.L. Stevens, A.L.Stevens@uva.nl, 2014
 
@@ -67,7 +68,7 @@ def get_mean_count_rate(string):
 
 
 ###############################################################################
-def main(in_file, out_file, bin_num):
+def main(in_file, out_file, bin_num, spec_type):
 	""" 
 			main
 			
@@ -77,6 +78,7 @@ def main(in_file, out_file, bin_num):
 	Passed: in_file - Name of input file with CCF amplitudes per energy bin.
 			out_file - Name of output file to write energy spectrum to.
 			bin_num - The CCF phase bin to get energy spectrum for.
+			spec_type - The type of spectra to produce.
 
 	Returns: nothing
 	
@@ -108,22 +110,24 @@ def main(in_file, out_file, bin_num):
 	## End of with-block
 	
 	ccf_amps = ccf_amps_and_err[0:64]
-# 	print ccf_amps
 	ccf_err = ccf_amps_and_err[64:128]
 	
 	obs_time = read_obs_time(in_file)
 	mean_err = np.sqrt(mean_count_rate * obs_time) / obs_time
-# 	print np.shape(ccf_amps)
-# 	print ccf_amps
-
-	amps = np.add(ccf_amps, mean_count_rate) 
-# 	amps = mean_count_rate
-# 	amps = ccf_amps
-# 	print mean_count_rate[20:23]
 	
-	err = np.sqrt(np.add(np.square(ccf_err), np.square(mean_err)))
-# 	err = mean_err
-# 	err = ccf_err
+	amps = []
+	err = []
+	print spec_type
+	if spec_type == 0:
+		amps = np.add(ccf_amps, mean_count_rate) 
+		err = np.sqrt(np.add(np.square(ccf_err), np.square(mean_err)))
+	elif spec_type == 1:
+		amps = ccf_amps
+		err = ccf_err
+	elif spec_type == 2:
+		amps = mean_count_rate
+		err = mean_err
+	## End of if/else spectrum type
 
 	output(out_file, bin_num, amps, err)
 
@@ -143,8 +147,11 @@ if __name__ == "__main__":
 		cross-correlation function to.")
 	parser.add_argument('-b', '--bin', required=True, type=int, dest='bin_num',  
 		help="The phase bin number of the CCF to select energy bins for.")
+	parser.add_argument('-s', '--spec', type=int, dest='spec_type', 
+		choices=range(0, 3), help="Indicating the type of spectrum to produce. \
+		0 for mean+ccf, 1 for ccf, 2 for mean.")
 	args = parser.parse_args()
 
-	main(args.infile, args.outfile, args.bin_num)
+	main(args.infile, args.outfile, args.bin_num, args.spec_type)
 
 ## End of program 'energyspec.py'

@@ -11,25 +11,25 @@ in_dir="$home_dir/Dropbox/Research/cross_correlation"
 exe_dir="$home_dir/Dropbox/Research/energy_spectra"
 out_dir="$exe_dir/out_es"
 script_dir="$home_dir/Dropbox/Scripts"
-# day=$(date +%y%m%d)  # make the date a string and assign it to 'day'
-day="141008"
+day=$(date +%y%m%d)  # make the date a string and assign it to 'day'
+# day="141008"
 dump_file=dum.dat # Name of dumping file for intermediary steps
 
 if [ ! -d "$out_dir" ]; then
 	mkdir -p "$out_dir"
 fi
 
-# propID=$1
-# obsID_list=$2
-# dt=$3
-# numsec=$4
-# testing=$5
+propID=$1
+obsID_list=$2
+dt=$3
+numsec=$4
+testing=$5
 
-propID="P70080"
-obsID_list="$home_dir/Lists/${propID}_obsIDs.lst"
-dt=1
-numsec=4
-testing=0
+# propID="P70080"
+# obsID_list="$home_dir/Lists/${propID}_obsIDs.lst"
+# dt=1
+# numsec=4
+# testing=0
 
 spec_type=1  # 0 for mean+ccf, 1 for ccf, 2 for mean
 

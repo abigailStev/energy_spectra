@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import itertools
 from tools import read_obs_time
+from astropy.io import fits
 
 """
 		energyspec.py
@@ -84,40 +85,54 @@ def main(in_file, out_file, bin_num, spec_type):
 	
 	"""
 	pass
-	assert bin_num >= 0
+	assert bin_num >= 0, "ERROR: Bin number must be >= 0."
 # 	bin_num = -1
 	ccf_amps_and_err = np.zeros(128, dtype=np.float64)
 	mean_count_rate = np.zeros(64, dtype=np.int32)
-
-	with open(in_file, 'r') as f:
-		for line in f:	
-			if line[0].strip() != "#":
-# 				print line
-				line = line.strip().split()
-				if int(line[0]) == bin_num:
-# 					print "Bin found!"
-					for i in xrange(0, 128):
-						ccf_amps_and_err[i] = float(line[i+1])
-					break
+	
+	if in_file[-3:].lower() == 'dat':
+		with open(in_file, 'r') as f:
+			for line in f:	
+				if line[0].strip() != "#":
+	# 				print line
+					line = line.strip().split()
+					if int(line[0]) == bin_num:
+	# 					print "Bin found!"
+						for i in xrange(0, 128):
+							ccf_amps_and_err[i] = float(line[i+1])
+						break
+				else:
+					if "Mean" in line.strip() and \
+						"count rate" in line.strip() and \
+						"ci" in line.strip():
+						mean_count_rate = get_mean_count_rate(line.strip())
 			else:
-				if "Mean" in line.strip() and \
-					"count rate" in line.strip() and \
-					"ci" in line.strip():
-					mean_count_rate = get_mean_count_rate(line.strip())
-		else:
-			print "\n\tERROR: Phase bin not found. Check that it is within the range of the file. Exiting."
-			exit()
-	## End of with-block
+				raise Exception("ERROR: Phase bin not found. Check that it is within the range of the file.")
+		## End of with-block
 	
-	ccf_amps = ccf_amps_and_err[0:64]
-	ccf_err = ccf_amps_and_err[64:128]
+		ccf_amps = ccf_amps_and_err[0:64]
+		ccf_err = ccf_amps_and_err[64:128]
+		obs_time = read_obs_time(in_file)
 	
-	obs_time = read_obs_time(in_file)
+	elif in_file[-4:].lower() == 'fits':
+		file_hdu = fits.open(in_file)
+		table = file_hdu[1].data
+		obs_time = file_hdu[0].header['EXPOSURE']
+		mean_count_rate = get_mean_count_rate(file_hdu[0].header['RATE_CI'])
+		file_hdu.close()
+		
+		time_bin_mask = table.field('TIME_BIN') == bin_num
+		table_i = table[time_bin_mask]
+		ccf_amps = table_i.field('CCF')
+		ccf_err = table_i.field('ERROR')
+	else:
+		raise Exception("ERROR: Input file must have extension .dat or .fits.")
+	## End of if/elif file type
+	
 	mean_err = np.sqrt(mean_count_rate * obs_time) / obs_time
-	
 	amps = []
 	err = []
-	print spec_type
+# 	print spec_type
 	if spec_type == 0:
 		amps = np.add(ccf_amps, mean_count_rate) 
 		err = np.sqrt(np.add(np.square(ccf_err), np.square(mean_err)))
@@ -127,6 +142,8 @@ def main(in_file, out_file, bin_num, spec_type):
 	elif spec_type == 2:
 		amps = mean_count_rate
 		err = mean_err
+	else:
+		raise Exception("ERROR: Spectrum type not a valid option.")
 	## End of if/else spectrum type
 
 	output(out_file, bin_num, amps, err)

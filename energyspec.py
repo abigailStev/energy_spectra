@@ -1,22 +1,27 @@
 import argparse
 import numpy as np
 import itertools
-from tools import read_obs_time
 from astropy.io import fits
+from tools import read_obs_time  # https://github.com/abigailStev/whizzy_scripts
+
+__author__ = "Abigail Stevens"
+__author_email__ = "A.L.Stevens@uva.nl"
+__year__ = "2014"
+__description__ = "Takes CCF amplitudes+mean energy spectrum of a specific time\
+ bin and writes them to a file. Can indicate whether to produce spectra that \
+are mean+ccf, ccf, or mean."
+
 
 """
 		energyspec.py
 
-Takes CCF amplitudes+mean energy spectrum of a specific time bin and writes them
-to a file. Can indicate whether to produce spectra that are mean+ccf, ccf, or 
-mean.
-
-Written in Python 2.7 by A.L. Stevens, A.L.Stevens@uva.nl, 2014
+Written in Python 2.7.
 
 All scientific modules imported above, as well as python 2.7, can be downloaded 
 in the Anaconda package, https://store.continuum.io/cshop/anaconda/
 
 """
+
 ###############################################################################
 def output(out_file, bin_num, amps, err):
 	"""
@@ -35,7 +40,7 @@ def output(out_file, bin_num, amps, err):
 	"""
 	pass
 	
-	print "Output sent to %s" % out_file
+# 	print "Output sent to %s" % out_file
 	
 	with open(out_file, 'w') as out:
 		for i in xrange(0, 64):
@@ -57,7 +62,6 @@ def get_mean_count_rate(string):
 	Returns: an array of the mean rates per energy channel
 	
 	"""
-	pass
 	
 # 	print string
 	start_index = string.index('[')
@@ -84,7 +88,6 @@ def main(in_file, out_file, bin_num, spec_type):
 	Returns: nothing
 	
 	"""
-	pass
 	assert bin_num >= 0, "ERROR: Bin number must be >= 0."
 # 	bin_num = -1
 	ccf_amps_and_err = np.zeros(128, dtype=np.float64)

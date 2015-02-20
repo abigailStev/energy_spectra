@@ -6,7 +6,7 @@ from tools import read_obs_time  # https://github.com/abigailStev/whizzy_scripts
 
 __author__ = "Abigail Stevens"
 __author_email__ = "A.L.Stevens@uva.nl"
-__year__ = "2014"
+__year__ = "2014-2015"
 __description__ = "Takes CCF amplitudes+mean energy spectrum of a specific time\
  bin and writes them to a file. Can indicate whether to produce spectra that \
 are mean+ccf, ccf, or mean."
@@ -17,12 +17,9 @@ are mean+ccf, ccf, or mean."
 
 Written in Python 2.7.
 
-All scientific modules imported above, as well as python 2.7, can be downloaded 
-in the Anaconda package, https://store.continuum.io/cshop/anaconda/
-
 """
 
-###############################################################################
+################################################################################
 def output(out_file, bin_num, amps, err):
 	"""
 			output
@@ -51,7 +48,7 @@ def output(out_file, bin_num, amps, err):
 ## End of function 'output'
 
 
-###############################################################################
+################################################################################
 def get_mean_count_rate(string):
 	"""
 			get_mean_count_rate
@@ -72,20 +69,13 @@ def get_mean_count_rate(string):
 ## End of 'get_mean_count_rate'	
 
 
-###############################################################################
+################################################################################
 def main(in_file, out_file, bin_num, spec_type):
 	""" 
 			main
 			
 	Finds the time bin desired, gets the filtered CCF amplitudes, sends to 
 	output.
-	
-	Passed: in_file - Name of input file with CCF amplitudes per energy bin.
-			out_file - Name of output file to write energy spectrum to.
-			bin_num - The CCF phase bin to get energy spectrum for.
-			spec_type - The type of spectra to produce.
-
-	Returns: nothing
 	
 	"""
 	assert bin_num >= 0, "ERROR: Bin number must be >= 0."
@@ -122,6 +112,7 @@ def main(in_file, out_file, bin_num, spec_type):
 		table = file_hdu[1].data
 		obs_time = file_hdu[0].header['EXPOSURE']
 		mean_count_rate = get_mean_count_rate(file_hdu[0].header['RATE_CI'])
+		mean_count_rate[np.where(mean_count_rate < 0.0)] = 0
 		file_hdu.close()
 		
 		time_bin_mask = table.field('TIME_BIN') == bin_num
@@ -154,8 +145,12 @@ def main(in_file, out_file, bin_num, spec_type):
 ## End of function 'main'
 
 
-###############################################################################
+################################################################################
 if __name__ == "__main__":
+	
+	##############################################
+	## Parsing input arguments and calling 'main'
+	##############################################
 	
 	parser = argparse.ArgumentParser(description='Takes CCF amplitudes + mean \
 		energy spectrum of a specific time bin and writes them to a file.')
@@ -175,3 +170,4 @@ if __name__ == "__main__":
 	main(args.infile, args.outfile, args.bin_num, args.spec_type)
 
 ## End of program 'energyspec.py'
+################################################################################

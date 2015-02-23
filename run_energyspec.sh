@@ -2,49 +2,56 @@
 
 ################################################################################
 ## 
-## 
+## Bash script to run energyspec.py and XSPEC.
+##
+## Example call: ./run_energyspec.sh J1808 4 16 0 150131
+##
+## Change the directory names and specifiers before the double '#' row to best
+## suit your setup.
+##
+## Notes: HEASOFT 6.11.*, bash 3.*, and Python 2.7.* (with supporting libraries) 
+## 		  must be installed in order to run this script. 
 ##
 ## Written by Abigail Stevens, A.L.Stevens@uva.nl, 2014-2015
 ##
 ################################################################################
 
-##########################################
 ## Checking the number of input arguments
-##########################################
-
-if (( $# != 6 )); then
-    echo -e "\tUsage: ./run_energyspec.sh <prefix> <obsID list> <dt multiple> <num seconds> <testing> <date>\n"
+if (( $# != 5 )); then
+    echo -e "\tUsage: ./run_energyspec.sh <prefix> <dt multiple> <num seconds> <testing> <date>\n"
     exit
 fi
 
 prefix=$1
-obsID_list=$2
-dt=$3
-numsec=$4
-testing=$5
-day=$6
+dt=$2
+numsec=$3
+testing=$4
+day=$5
+
+################################################################################
 
 ## If heainit isn't running, start it
 if (( $(echo $DYLD_LIBRARY_PATH | grep heasoft | wc -l) < 1 )); then
 	. $HEADAS/headas-init.sh
 fi
 
-################################################################################
-
-home_dir=$(ls -d ~)  # the -d flag is extremely important here
+home_dir=$(ls -d ~)
 in_dir="$home_dir/Dropbox/Research/cross_correlation"
 exe_dir="$home_dir/Dropbox/Research/energy_spectra"
 out_dir="$exe_dir/out_es"
-dump_file=dum.dat # Name of dumping file for intermediary steps
-
-# prefix="P70080"
-# obsID_list="$home_dir/Dropbox/Lists/${prefix}_obsIDs.lst"
-# dt=1
-# numsec=4
-# testing=0
+dump_file=dump.txt # Name of dumping file for intermediary steps
 
 data_dir="$home_dir/Reduced_data/$prefix"
 # data_dir="$home_dir/Dropbox/Research/sample_data"
+
+bkgd_spec="$data_dir/evt_bkgd_rebinned.pha"
+rsp_matrix="$data_dir/PCU2.rsp"
+out_root="${prefix}_${day}_t${dt}_${numsec}sec"
+
+ccf_file="$in_dir/out_ccf/${prefix}_${day}_t${dt}_${numsec}sec.fits"
+if (( $testing==1 )); then
+	ccf_file="$in_dir/out_ccf/test_${prefix}_${day}_t${dt}_${numsec}sec.fits"
+fi
 
 tab_ext="dat"
 plot_ext="png"
@@ -54,15 +61,10 @@ plot_ext="png"
 
 if [ ! -d "$out_dir" ]; then mkdir -p "$out_dir"; fi
 
-obsID=$(head -1 $obsID_list)
-
-
-ccf_file="$in_dir/out_ccf/${prefix}_${day}_t${dt}_${numsec}sec.fits"
-if (( testing==1 )); then
-	ccf_file="$in_dir/out_ccf/test_${prefix}_${day}_t${dt}_${numsec}sec.fits"
-fi
-
+########################################
 ## Reading exposure time of observation
+########################################
+
 if [ -e "$ccf_file" ]; then
 	if [ "${ccf_file##*.}" == "dat" ]; then
 		obs_time=$(python -c "from tools import read_obs_time; print read_obs_time('$ccf_file')")
@@ -80,38 +82,10 @@ if [ $(echo " $obs_time == 0.0" | bc) -eq 1 ]; then
 	exit
 fi
 
-# rsp_dump_file="rsp_matrix_dump.dat"
-# ## Making response matrix
-# if [ -e "$rsp_matrix" ]; then
-# 	echo "$rsp_matrix already exists."
-# elif [ -e "$data_dir/all_evt.pha" ]; then
-# 	pcarsp -f "$data_dir/all_evt.pha" -a "$data_dir/all.xfl" -l all -j y -p 2 -m n -n "$rsp_matrix" -z > $rsp_dump_file
-# # 	pcarsp -f "$data_dir/all_evt.pha" -a "$data_dir/all.xfl" -l all -j y -p 2 -m n -n "$rsp_matrix" -z
-# else
-# 	echo -e "\tERROR: $data_dir/event.pha does NOT exist. pcarsp was NOT run."
-# fi
-# 
-# # raw_event_bkgd="$data_dir/event_bkgd_notbinned.pha"
-# raw_event_bkgd="$data_dir/evt_bkgd.pha"
-# bkgd_spec="$out_dir/${prefix}_${day}_event_spec.bkgd"
-# 
-# if [ -e "$raw_event_bkgd" ] && [ -e "$exe_dir/chan.txt" ] ; then
-# 	rbnpha infile="$raw_event_bkgd" \
-# 		outfile="$bkgd_spec" \
-# 		binfile="$exe_dir/chan.txt" \
-# 		clobber=yes
-# else
-# 	echo -e "\tERROR: $raw_event_bkgd and/or $exe_dir/chan.txt do NOT exist. rbnpha was NOT run."
-# fi
-
-bkgd_spec="$data_dir/evt_bkgd_rebinned.pha"
-rsp_matrix="$data_dir/PCU2.rsp"
-# rsp_matrix="$out_dir/${prefix}_${day}_PCU2.rsp"
-# quaternions="$data_dir/appx_quat.fits"
-out_root="${prefix}_${day}_t${dt}_${numsec}sec"
-
-
+####################################
 ## Getting the mean energy spectrum
+####################################
+
 out_end="${out_root}_mean"
 out_file="$out_dir/$out_end"
 
@@ -119,7 +93,7 @@ cd "$out_dir"
 if [ -e "${ccf_file}" ]; then
 	python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_end}.${tab_ext}" -b 0 -s 2
 else
-	echo -e "\tERROR: ${ccf_file} does NOT exist, energyspec.py was NOT run."
+	echo -e "\tERROR: energyspec.py was not run. CCF output file does not exist."
 fi
 	
 if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && [ -e "$bkgd_spec" ]; then
@@ -144,32 +118,35 @@ if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && [ -e "$bkgd_spec" ]
 		backfile="$bkgd_spec" > $dump_file
 # 	echo "XSPEC data: ${out_file}.pha"
 else
-	echo -e "\tSpectrum, response matrix, and/or background spectrum do NOT exist, ascii2pha was NOT run."
+	echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, and/or background spectrum do not exist."
 fi
 if [ ! -e "${out_end}.pha" ]; then
-	echo -e "\tERROR: ASCII2pha did NOT run, so ${out_end}.pha does NOT exist."
+	echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
 fi
 
+#########################################################
+## Making ccf deviation energy spectra and plotting them
+#########################################################
 
-## Making ccf deviation spectra and plotting them
 spec_type=1  # 0 for mean+ccf, 1 for ccf, 2 for mean only
 xspec_script="$out_dir/${prefix}_${day}_xspec.xcm"
 spectrum_plot="${prefix}_${day}_ccf"
 
-if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi
-touch "$xspec_script"
+if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
 i=1
 
+###############################################
 ## Generating energy spectra at each phase bin
-## for tbin in {25..40..5}; do  ## should work in bash 4.*, but i have 3.2.*
+###############################################
+
 for (( tbin=15; tbin<=30; tbin+=5 )); do
-# 	echo "$tbin"
+
 	out_end="${out_root}_ccf_${tbin}bin"
 
 	if [ -e "${ccf_file}" ]; then
 		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_end}.${tab_ext}" -b "$tbin" -s "$spec_type"
 	else
-		echo -e "\tERROR: ${ccf_file} does not exist, energyspec.py was NOT run."
+		echo -e "\tERROR: energyspec.py was not run. CCF output file does not exist."
 	fi
 	
 	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ]; then
@@ -191,9 +168,9 @@ for (( tbin=15; tbin<=30; tbin+=5 )); do
 			exposure=$obs_time \
 			clobber=yes \
 			respfile="$rsp_matrix" > $dump_file
-# 		echo "XSPEC data: ${out_file}.pha"
+
 	else
-		echo -e "\tSpectrum and/or response matrix do NOT exist, ascii2pha was NOT run."
+		echo -e "\tERROR: ASCII2PHA was not run. Spectrum and/or response matrix do not exist."
 	fi
 	if [ ! -e "${out_end}.pha" ]; then
 		echo -e "\tERROR: ASCII2pha did NOT run, so ${out_end}.pha does NOT exist."
@@ -203,7 +180,10 @@ for (( tbin=15; tbin<=30; tbin+=5 )); do
 	((i+=1))
 done
 
-## Now we're ready to run xspec!
+#############################################
+## Now we're ready to run xspec! -- ccf only
+#############################################
+
 echo "ignore 1-4: **-3 11 31-**" >> $xspec_script
 echo "notice 1-4: 3 31" >> $xspec_script
 echo "cpd /xw" >> $xspec_script
@@ -213,32 +193,37 @@ echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
 echo "mod pow & 0" >> $xspec_script
 echo "iplot eeufspec" >> $xspec_script
-echo "@ccf_nomean.pco $spectrum_plot" >> $xspec_script
+echo "@ccfonly.pco -0.04 0.04 $spectrum_plot " >> $xspec_script
 echo "exit" >> $xspec_script
+
 cd "$out_dir"
 xspec < "$xspec_script" > "$dump_file"
 if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 
 
-## Making ccf+mean spectra and plotting them
+####################################################
+## Making ccf+mean energy spectra and plotting them
+####################################################
+
 spec_type=0  # 0 for mean+ccf, 1 for ccf, 2 for mean
 xspec_script="$out_dir/${prefix}_${day}_xspec.xcm"
 spectrum_plot="${prefix}_${day}_ccfwmean"
 
-if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi
-touch "$xspec_script"
+if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
 i=1
 
+###############################################
 ## Generating energy spectra at each phase bin
-## for tbin in {25..40..5}; do  ## should work in bash 4.*, but i have 3.2.*
+###############################################
+
 for (( tbin=15; tbin<=30; tbin+=5 )); do
-# 	echo "$tbin"
+
 	out_end="${out_root}_ccfwmean_${tbin}bin"
 
 	if [ -e "${ccf_file}" ]; then
 		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_end}.${tab_ext}" -b "$tbin" -s "$spec_type"
 	else
-		echo -e "\tERROR: ${ccf_file} does not exist, energyspec.py was NOT run."
+		echo -e "\tERROR: energyspec.py was not run. CCF output file does not exist."
 	fi
 	
 	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && [ -e "$bkgd_spec" ]; then
@@ -261,19 +246,22 @@ for (( tbin=15; tbin<=30; tbin+=5 )); do
 			clobber=yes \
 			respfile="$rsp_matrix" \
 			backfile="$bkgd_spec" > $dump_file
-# 		echo "XSPEC data: ${out_file}.pha"
+
 	else
-		echo -e "\tSpectrum, response matrix, and/or background spectrum do NOT exist, ascii2pha was NOT run."
+		echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, and/or background spectrum do not exist."
 	fi
 	if [ ! -e "${out_end}.pha" ]; then
-		echo -e "\tERROR: ASCII2pha did NOT run, so ${out_end}.pha does NOT exist."
+		echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
 	fi
 	
 	echo "data $i:$i $out_end" >> $xspec_script
 	((i+=1))
 done
 
-## Now we're ready to run xspec!
+#############################################
+## Now we're ready to run xspec! -- ccf+mean
+#############################################
+
 echo "ignore 1-4: **-3 11 31-**" >> $xspec_script
 echo "notice 1-4: 3 31" >> $xspec_script
 echo "cpd /xw" >> $xspec_script
@@ -283,11 +271,14 @@ echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
 echo "mod pow & 0" >> $xspec_script
 echo "iplot eeufspec" >> $xspec_script
-echo "@mean.pco $spectrum_plot" >> $xspec_script
+echo "@ccfwmean.pco 0.05 10 $spectrum_plot" >> $xspec_script
 echo "exit" >> $xspec_script
+
 cd "$out_dir"
 xspec < "$xspec_script" > "$dump_file"
 if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
+
+################################################################################
 
 
 ###########################
@@ -395,3 +386,5 @@ if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 # cd "$out_dir"
 # xspec < "$xspec_script" > "$dump_file"
 # if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
+
+################################################################################

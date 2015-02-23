@@ -91,12 +91,15 @@ out_file="$out_dir/$out_end"
 
 cd "$out_dir"
 if [ -e "${ccf_file}" ]; then
-	python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_end}.${tab_ext}" -b 0 -s 2
+	python "$exe_dir"/energyspec.py "${ccf_file}" "${out_end}.${tab_ext}" \
+		-b 0 -s 2
 else
-	echo -e "\tERROR: energyspec.py was not run. CCF output file does not exist."
+	echo -e "\tERROR: energyspec.py was not run. CCF output file does not \
+exist."
 fi
 	
-if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && [ -e "$bkgd_spec" ]; then
+if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
+	[ -e "$bkgd_spec" ]; then
 		
 	cd "$out_dir"
 	ascii2pha infile="${out_end}.${tab_ext}" \
@@ -118,7 +121,8 @@ if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && [ -e "$bkgd_spec" ]
 		backfile="$bkgd_spec" > $dump_file
 # 	echo "XSPEC data: ${out_file}.pha"
 else
-	echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, and/or background spectrum do not exist."
+	echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, and/or \
+background spectrum do not exist."
 fi
 if [ ! -e "${out_end}.pha" ]; then
 	echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
@@ -144,9 +148,11 @@ for (( tbin=15; tbin<=30; tbin+=5 )); do
 	out_end="${out_root}_ccf_${tbin}bin"
 
 	if [ -e "${ccf_file}" ]; then
-		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_end}.${tab_ext}" -b "$tbin" -s "$spec_type"
+		python "$exe_dir"/energyspec.py "${ccf_file}" "${out_end}.${tab_ext}" \
+			-b "$tbin" -s "$spec_type"
 	else
-		echo -e "\tERROR: energyspec.py was not run. CCF output file does not exist."
+		echo -e "\tERROR: energyspec.py was not run. CCF output file does not \
+exist."
 	fi
 	
 	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ]; then
@@ -170,10 +176,13 @@ for (( tbin=15; tbin<=30; tbin+=5 )); do
 			respfile="$rsp_matrix" > $dump_file
 
 	else
-		echo -e "\tERROR: ASCII2PHA was not run. Spectrum and/or response matrix do not exist."
+		echo -e "\tERROR: ASCII2PHA was not run. Spectrum and/or response \
+matrix do not exist."
 	fi
+
 	if [ ! -e "${out_end}.pha" ]; then
-		echo -e "\tERROR: ASCII2pha did NOT run, so ${out_end}.pha does NOT exist."
+		echo -e "\tERROR: ASCII2pha did NOT run, so ${out_end}.pha does NOT \
+exist."
 	fi
 	
 	echo "data $i:$i $out_end" >> $xspec_script
@@ -197,7 +206,7 @@ echo "@ccfonly.pco -0.04 0.04 $spectrum_plot " >> $xspec_script
 echo "exit" >> $xspec_script
 
 cd "$out_dir"
-xspec < "$xspec_script" > "$dump_file"
+xspec < "$xspec_script" > $dump_file
 if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 
 
@@ -221,12 +230,15 @@ for (( tbin=15; tbin<=30; tbin+=5 )); do
 	out_end="${out_root}_ccfwmean_${tbin}bin"
 
 	if [ -e "${ccf_file}" ]; then
-		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_end}.${tab_ext}" -b "$tbin" -s "$spec_type"
+		python "$exe_dir"/energyspec.py "${ccf_file}" "${out_end}.${tab_ext}" \
+			-b "$tbin" -s "$spec_type"
 	else
-		echo -e "\tERROR: energyspec.py was not run. CCF output file does not exist."
+		echo -e "\tERROR: energyspec.py was not run. CCF output file does not \
+exist."
 	fi
 	
-	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && [ -e "$bkgd_spec" ]; then
+	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
+		[ -e "$bkgd_spec" ]; then
 		
 		cd "$out_dir"
 		ascii2pha infile="${out_end}.${tab_ext}" \
@@ -248,8 +260,10 @@ for (( tbin=15; tbin<=30; tbin+=5 )); do
 			backfile="$bkgd_spec" > $dump_file
 
 	else
-		echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, and/or background spectrum do not exist."
+		echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, \
+and/or background spectrum do not exist."
 	fi
+
 	if [ ! -e "${out_end}.pha" ]; then
 		echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
 	fi
@@ -275,7 +289,7 @@ echo "@ccfwmean.pco 0.05 10 $spectrum_plot" >> $xspec_script
 echo "exit" >> $xspec_script
 
 cd "$out_dir"
-xspec < "$xspec_script" > "$dump_file"
+xspec < "$xspec_script" > $dump_file
 if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 
 ################################################################################
@@ -302,18 +316,19 @@ if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 # 
 # ## Generating energy spectra at each phase bin
 # for tbin in {20,27,33}; do  ## works for specific bin numbers
-# ## for tbin in {20..35..5}; do  ## should work in bash 4.*, but i have bash 3.*
 # ## for (( tbin=20; tbin<=35; tbin+=5 )); do  ## works for a range
 # # 	echo "$tbin"
 # 	out_end="${out_root}_ccfwmean_${tbin}bin"
 # 
 # 	if [ -e "${ccf_file}" ]; then
-# 		python "$exe_dir"/energyspec.py -i "${ccf_file}" -o "${out_end}.${tab_ext}" -b "$tbin" -s "$spec_type"
+# 		python "$exe_dir"/energyspec.py "${ccf_file}" "${out_end}.${tab_ext}" \
+# 			-b "$tbin" -s "$spec_type"
 # 	else
 # 		echo -e "\tERROR: ${ccf_file} does not exist, energyspec.py was NOT run."
 # 	fi
 # 	
-# 	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && [ -e "$bkgd_spec" ]; then
+# 	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
+# 		[ -e "$bkgd_spec" ]; then
 # 		
 # 		cd "$out_dir"
 # 		ascii2pha infile="${out_end}.${tab_ext}" \
@@ -336,15 +351,21 @@ if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 # # 		echo "XSPEC data: ${out_file}.pha"
 # # 		echo -e "XSPEC resp: $rsp_matrix"
 # 	else
-# 		echo -e "\tSpectrum, response matrix, and/or background spectrum do NOT exist, ascii2pha was NOT run."
+# 		echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, \
+# and/or background spectrum do not exist."
 # 	fi
 # 	if [ ! -e "${out_end}.pha" ]; then
-# 		echo -e "\tERROR: ASCII2pha did NOT run, so ${out_end}.pha does NOT exist."
+# 		echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
 # 	fi
 # 	
 # 	echo "data $i:$i $out_end" >> $xspec_script
 # # 	echo "data $i:$i $out_end"
-# 	mod_vals+="& .113 & 1.9 .001 1.0 1.0 2.0 2.0 & .18 .001 .15 .15 .2 .2 & .8 .001 .6 .6 1. 1. & 50. .01 45. 45. 75. 75. "
+# 	mod_vals+="& .113 & \
+# 1.9 .001 1.0 1.0 2.0 2.0 & \
+# .18 .001 .15 .15 .2 .2 & \
+# .8 .001 .6 .6 1. 1. & \
+# 50. .01 45. 45. 75. 75. "
+# 
 # 	freeze_pars+="$j "
 # 	((i+=1))
 # 	((j+=5))

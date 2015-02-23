@@ -63,6 +63,9 @@ def dat_in(in_file, ccf_amps_and_err):
 	Gets CCF from a .dat file.
 	
 	"""
+	
+	ccf_amps_and_err = np.zeros(128, dtype=np.float64)
+	
 	with open(in_file, 'r') as f:
 		for line in f:	
 			if line[0].strip() != "#":
@@ -92,14 +95,9 @@ within the range of the file.")
 
 
 ################################################################################
-def fits_in(in_file):
-	"""
-			fits_in
-	
-	Gets CCF from a FITS file.
-	
-    """
-	
+def fits_in(in_file, bin_num):
+    """fits_inGets CCF from a FITS file."""
+    
     file_hdu = fits.open(in_file)
     table = file_hdu[1].data
     obs_time = file_hdu[0].header['EXPOSURE']
@@ -112,7 +110,7 @@ def fits_in(in_file):
     ccf_amps = table_i.field('CCF')
     ccf_err = table_i.field('ERROR')
 	
-	return ccf_amps, ccf_err, obs_time, mean_count_rate
+    return ccf_amps, ccf_err, obs_time, mean_count_rate
 	
 ################################################################################
 def main(in_file, out_file, bin_num, spec_type):
@@ -128,7 +126,6 @@ def main(in_file, out_file, bin_num, spec_type):
 	## Initializations
 	###################
 	
-	ccf_amps_and_err = np.zeros(128, dtype=np.float64)
 	mean_count_rate = np.zeros(64, dtype=np.int32)
 	amps = []
 	err = []
@@ -139,12 +136,11 @@ def main(in_file, out_file, bin_num, spec_type):
 	
 	if in_file[-3:].lower() == 'dat':
 		
-		ccf_amps, ccf_err, obs_time, mean_count_rate = dat_in(in_file, \
-			ccf_amps_and_err)
+		ccf_amps, ccf_err, obs_time, mean_count_rate = dat_in(in_file, bin_num)
 	
 	elif in_file[-4:].lower() == 'fits':
 	
-		ccf_amps, ccf_err, obs_time, mean_count_rate = fits_in(in_file)
+		ccf_amps, ccf_err, obs_time, mean_count_rate = fits_in(in_file, bin_num)
 	
 	else:
 		raise Exception("ERROR: Input file must have extension .dat or .fits.")

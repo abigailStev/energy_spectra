@@ -134,7 +134,7 @@ fi
 
 spec_type=1  # 0 for mean+ccf, 1 for ccf, 2 for mean only
 xspec_script="$out_dir/${prefix}_${day}_xspec.xcm"
-spectrum_plot="${prefix}_${day}_ccf"
+spectrum_plot="${prefix}_${day}_ccfonly"
 
 if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
 i=1
@@ -143,7 +143,8 @@ i=1
 ## Generating energy spectra at each phase bin
 ###############################################
 
-for (( tbin=15; tbin<=30; tbin+=5 )); do
+# for tbin in {24,29,34,41}; do
+for tbin in {6,13,19,24}; do
 
 	out_end="${out_root}_ccf_${tbin}bin"
 
@@ -193,16 +194,16 @@ done
 ## Now we're ready to run xspec! -- ccf only
 #############################################
 
-echo "ignore 1-4: **-3 11 31-**" >> $xspec_script
-echo "notice 1-4: 3 31" >> $xspec_script
+echo "ignore 1-4: **-2 11 31-**" >> $xspec_script
+echo "notice 1-4: 2 31" >> $xspec_script
 echo "cpd /xw" >> $xspec_script
 echo "setplot energy" >> $xspec_script
 echo "systematic 0.005" >> $xspec_script
 echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
-echo "mod pow & 0" >> $xspec_script
+echo "mod pow & 0 " >> $xspec_script
 echo "iplot eeufspec" >> $xspec_script
-echo "@ccfonly.pco -0.04 0.04 $spectrum_plot " >> $xspec_script
+echo "@ccfonly_points.pco -0.6 0.6 $spectrum_plot " >> $xspec_script
 echo "exit" >> $xspec_script
 
 cd "$out_dir"
@@ -225,7 +226,8 @@ i=1
 ## Generating energy spectra at each phase bin
 ###############################################
 
-for (( tbin=15; tbin<=30; tbin+=5 )); do
+# for tbin in {24,29,34,41}; do
+for tbin in {6,13,19,24}; do
 
 	out_end="${out_root}_ccfwmean_${tbin}bin"
 
@@ -276,16 +278,16 @@ done
 ## Now we're ready to run xspec! -- ccf+mean
 #############################################
 
-echo "ignore 1-4: **-3 11 31-**" >> $xspec_script
-echo "notice 1-4: 3 31" >> $xspec_script
+echo "ignore 1-4: **-2 11 31-**" >> $xspec_script
+echo "notice 1-4: 2 31" >> $xspec_script
 echo "cpd /xw" >> $xspec_script
 echo "setplot energy" >> $xspec_script
 echo "systematic 0.005" >> $xspec_script
 echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
-echo "mod pow & 0" >> $xspec_script
+echo "mod pow & 0 " >> $xspec_script
 echo "iplot eeufspec" >> $xspec_script
-echo "@ccfwmean.pco 0.05 10 $spectrum_plot" >> $xspec_script
+echo "@ccfwmean_points.pco 0.3 9 $spectrum_plot" >> $xspec_script
 echo "exit" >> $xspec_script
 
 cd "$out_dir"

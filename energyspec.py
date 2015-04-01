@@ -158,6 +158,9 @@ def main(in_file, out_file, bin_num, spec_type):
 	elif spec_type == 1:
 		amps = ccf_amps
 		err = ccf_err
+# 		with np.errstate(all='ignore'):
+# 			amps = np.where(mean_count_rate != 0, ccf_amps / mean_count_rate, 0)
+# 			err = np.where(mean_count_rate != 0, ccf_err / mean_count_rate, 0)
 	elif spec_type == 2:
 		amps = mean_count_rate
 		err = mean_err

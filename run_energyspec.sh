@@ -146,7 +146,7 @@ i=1
 # for tbin in {24,29,34,41}; do
 for tbin in {6,13,19,24}; do
 
-	out_end="${out_root}_ccf_${tbin}bin"
+	out_end="${out_root}_ccfonly_${tbin}bin"
 
 	if [ -e "${ccf_file}" ]; then
 		python "$exe_dir"/energyspec.py "${ccf_file}" "${out_end}.${tab_ext}" \
@@ -194,8 +194,8 @@ done
 ## Now we're ready to run xspec! -- ccf only
 #############################################
 
-echo "ignore 1-4: **-2 11 31-**" >> $xspec_script
-echo "notice 1-4: 2 31" >> $xspec_script
+echo "ignore 1-4: **-2 11 30-**" >> $xspec_script
+echo "notice 1-4: 2 30" >> $xspec_script
 echo "cpd /xw" >> $xspec_script
 echo "setplot energy" >> $xspec_script
 echo "systematic 0.005" >> $xspec_script
@@ -278,8 +278,8 @@ done
 ## Now we're ready to run xspec! -- ccf+mean
 #############################################
 
-echo "ignore 1-4: **-2 11 31-**" >> $xspec_script
-echo "notice 1-4: 2 31" >> $xspec_script
+echo "ignore 1-4: **-2 11 30-**" >> $xspec_script
+echo "notice 1-4: 2 30" >> $xspec_script
 echo "cpd /xw" >> $xspec_script
 echo "setplot energy" >> $xspec_script
 echo "systematic 0.005" >> $xspec_script
@@ -287,7 +287,7 @@ echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
 echo "mod pow & 0 " >> $xspec_script
 echo "iplot eeufspec" >> $xspec_script
-echo "@ccfwmean_points.pco 0.3 9 $spectrum_plot" >> $xspec_script
+echo "@ccfwmean_points.pco 0.15 9 $spectrum_plot" >> $xspec_script
 echo "exit" >> $xspec_script
 
 cd "$out_dir"

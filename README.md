@@ -32,9 +32,12 @@ A QDP style file for plotting the mean+ccf (i.e. phase-resolved energy
 spectrum) with unconnected points.
 
 
-## Old
-### ratio_spectrum.py
-### mean_spectrum.py
-### mean_spectrum.sh
 
-#### Disclaimer: This code comes with no legal guarantees.
+##### Disclaimer: This code comes with no legal guarantees.
+
+
+## Old
+#### ratio_spectrum.py
+#### mean_spectrum.py
+#### mean_spectrum.sh
+

@@ -5,3 +5,10 @@
 *.log
 *.png
 *.eps
+*.ps
+*.pdf
+*.xcm
+*.bkgd
+*.bkgd2
+*.rsp
+*.txt

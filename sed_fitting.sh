@@ -7,7 +7,7 @@
 ## the script, read off fit data from log file with multispec_plots.py, and make
 ## plots of variables changing with phase.
 ##
-## Example call: ./engy_spec_fitting.sh GX339-BQPO 64 64 0 150131
+## Example call: ./sed_fitting.sh GX339-BQPO 64 64 0 150131
 ##
 ## Change the directory names and specifiers before the double '#' row to best
 ## suit your setup.
@@ -21,7 +21,7 @@
 
 ## Checking the number of input arguments
 if (( $# != 5 )); then
-    echo -e "\tUsage: ./engy_spec_fitting.sh <prefix> <dt multiple> <num "\
+    echo -e "\tUsage: ./sed_fitting.sh <prefix> <dt multiple> <num "\
         "seconds> <testing> <date>\n"
     exit
 fi

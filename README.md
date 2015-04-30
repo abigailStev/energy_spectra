@@ -2,7 +2,8 @@
 
 Takes a two-dimensional cross correlation function and writes multiple energy 
 spectra from it (per specified phase bin). Look at the 1-D or 2-D CCF to see
-which phase bins might be interesting to look at.
+which phase bins might be interesting to look at. Now also able to fit multiple
+energy spectra simultaneously!
 
 ## Contents
 
@@ -31,7 +32,14 @@ spectrum) with stepped lines.
 A QDP style file for plotting the mean+ccf (i.e. phase-resolved energy 
 spectrum) with unconnected points.
 
+### sed_fitting.sh
+Simultaneously fits multiple energy spectra (SEDs) from different points in the 
+QPO phase. Makes the phase-resolved energy spectra, writes the xspec script, 
+runs the xspec script, outputs to a log file.
 
+### multifit_plots.py
+Reads the xspec log file to plot how the free parameters change with QPO phase.
+Fits the changing parameters with a sine wave to get the phase of each.
 
 ##### Disclaimer: This code comes with no legal guarantees.
 

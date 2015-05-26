@@ -46,7 +46,7 @@ def get_mean_count_rate(string):
 
 
 ################################################################################
-def fits_in(in_file, phase_bin):
+def ccf_in(in_file, phase_bin):
     """
     Gets CCF at a specific time (or phase) bin from the FITS file of CCF output.
     """
@@ -88,7 +88,7 @@ def main(in_file, out_file, phase_bin, spec_type):
     assert in_file[-4:].lower() == 'fits', "ERROR: Input file must have "\
             "extension .fits."
 
-    ccf_amps, ccf_err, obs_time, mean_count_rate, detchans = fits_in(in_file, \
+    ccf_amps, ccf_err, obs_time, mean_count_rate, detchans = ccf_in(in_file, \
             phase_bin)
 
     ##############################################################

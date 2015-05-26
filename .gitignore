@@ -12,3 +12,5 @@
 *.bkgd2
 *.rsp
 *.txt
+*.DS*
+.idea*

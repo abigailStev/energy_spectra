@@ -24,9 +24,8 @@ def output(out_file, phase_bin, detchans, amps, err):
     for the FTOOLS script ascii2pha.
 
     """
-    print "in output"
     with open(out_file, 'w') as out:
-        for i in xrange(0, detchans):
+        for i in range(0, detchans):
             out.write("%d\t%.6e\t%.6e\n" % (i, amps[i], err[i]))
 # 			out.write("%d\t%.6e\t%.6e\n" % (i, amps[i], amps[i]*.1))
 
@@ -74,19 +73,19 @@ def main(in_file, out_file, phase_bin, spec_type):
 
     """
 
-    ###################
-    ## Initializations
-    ###################
+    ##################################
+    ## Initializations and assertions
+    ##################################
 
     amps = []
     err = []
 
+    assert in_file[-4:].lower() == 'fits', "ERROR: Input file must have "\
+            "extension .fits."
+
     #####################################
     ## Reading in CCF based on file type
     #####################################
-
-    assert in_file[-4:].lower() == 'fits', "ERROR: Input file must have "\
-            "extension .fits."
 
     ccf_amps, ccf_err, obs_time, mean_count_rate, detchans = ccf_in(in_file, \
             phase_bin)

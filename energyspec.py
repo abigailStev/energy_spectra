@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 from astropy.io import fits
-from tools import read_obs_time, type_positive_int
+from tools import type_positive_int
 
 __author__ = "Abigail Stevens"
 __author_email__ = "A.L.Stevens@uva.nl"
@@ -35,7 +35,8 @@ def output(out_file, phase_bin, detchans, amps, err):
 def get_mean_count_rate(string):
     """
     Gets the mean count rate as an array from a string listing it with values
-    separated by commas.
+    separated by commas. For example, this is what you get from the 'RATE_CI'
+    header value in the CCF fits file.
 
     """
 
@@ -49,7 +50,6 @@ def fits_in(in_file, phase_bin):
     """
     Gets CCF at a specific time (or phase) bin from the FITS file of CCF output.
     """
-    print in_file
     file_hdu = fits.open(in_file)
     table = file_hdu[1].data
     obs_time = file_hdu[0].header['EXPOSURE']
@@ -88,8 +88,8 @@ def main(in_file, out_file, phase_bin, spec_type):
     assert in_file[-4:].lower() == 'fits', "ERROR: Input file must have "\
             "extension .fits."
 
-    ccf_amps, ccf_err, obs_time, mean_count_rate, detchans = fits_in(in_file)
-    print "\t", phase_bin
+    ccf_amps, ccf_err, obs_time, mean_count_rate, detchans = fits_in(in_file, \
+            phase_bin)
 
     ##############################################################
     ## Computes the type of energy spectrum indicated by the user
@@ -103,21 +103,16 @@ def main(in_file, out_file, phase_bin, spec_type):
     elif spec_type == 1:
         amps = ccf_amps
         err = ccf_err
-        print amps
-        print err
-# 		amps = np.where(mean_count_rate != 0, ccf_amps / mean_count_rate, 0)
-# 		err = np.where(mean_count_rate != 0, ccf_err / mean_count_rate, 0)
     elif spec_type == 2:
         amps = mean_count_rate
         err = mean_err
     else:
-        raise Exception("ERROR: Spectrum type not a valid option.")
-    ## End of if/else spectrum type
+        raise Exception("ERROR: Spectrum type is not a valid option.")
 
     ##########
     ## Output
     ##########
-    print "still here!"
+
     output(out_file, phase_bin, detchans, amps, err)
 
 

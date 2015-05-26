@@ -45,41 +45,6 @@ def get_mean_count_rate(string):
 
 
 ################################################################################
-def dat_in(in_file, ccf_amps_and_err):
-    """
-    Gets CCF from a .dat file.
-
-    """
-
-    ccf_amps_and_err = np.zeros(128, dtype=np.float64)
-
-    with open(in_file, 'r') as f:
-        for line in f:
-            if line[0].strip() != "#":
-                line = line.strip().split()
-                if int(line[0]) == phase_bin:
-# 					print "Bin found!"
-                    for i in xrange(0, 128):
-                        ccf_amps_and_err[i] = float(line[i+1])
-                    break
-            else:
-                if "Mean" in line.strip() and \
-                    "count rate" in line.strip() and \
-                    "ci" in line.strip():
-                    mean_count_rate = get_mean_count_rate(line.strip())
-        else:
-            raise Exception("ERROR: Phase bin not found. Check that it is \
-within the range of the file.")
-    ## End of with-block
-
-    ccf_amps = ccf_amps_and_err[0:64]
-    ccf_err = ccf_amps_and_err[64:128]
-    obs_time = read_obs_time(in_file)
-
-    return ccf_amps, ccf_err, obs_time, mean_count_rate
-
-
-################################################################################
 def fits_in(in_file, phase_bin):
     """
     Gets CCF at a specific time (or phase) bin from the FITS file of CCF output.

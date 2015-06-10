@@ -86,47 +86,69 @@ fi
 ## Getting the mean energy spectrum
 ####################################
 
-# out_end="${out_root}_mean"
-# out_file="$out_dir/$out_end"
-# 
-# cd "$out_dir"
-# if [ -e "${ccf_file}" ]; then
-# 	python "$exe_dir"/energyspec.py "${ccf_file}" "${out_end}.${tab_ext}" \
-# 		-b 0 -s 2
-# else
-# 	echo -e "\tERROR: energyspec.py was not run. CCF output file does not \
-# exist."
-# fi
-# 	
-# if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
-# 	[ -e "$bkgd_spec" ]; then
-# 		
-# 	cd "$out_dir"
-# 	ascii2pha infile="${out_end}.${tab_ext}" \
-# 		outfile="${out_end}.pha" \
-# 		chanpres=yes \
-# 		dtype=2 \
-# 		qerror=yes \
-# 		rows=- \
-# 		tlmin=0 \
-# 		detchans=64 \
-# 		pois=no \
-# 		telescope=XTE \
-# 		instrume=PCA \
-# 		detnam=PCU2 \
-# 		filter=NONE \
-# 		exposure=$obs_time \
-# 		clobber=yes \
-# 		respfile="$rsp_matrix" \
-# 		backfile="$bkgd_spec" > $dump_file
-# # 	echo "XSPEC data: ${out_file}.pha"
-# else
-# 	echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, and/or \
-# background spectrum do not exist."
-# fi
-# if [ ! -e "${out_end}.pha" ]; then
-# 	echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
-# fi
+out_end="${out_root}_mean"
+out_file="$out_dir/$out_end"
+
+xspec_script="$out_dir/${prefix}_${day}_xspec.xcm"
+spectrum_plot="${prefix}_${day}_meanonly"
+
+if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
+
+cd "$out_dir"
+if [ -e "${ccf_file}" ]; then
+	python "$exe_dir"/energyspec.py "${ccf_file}" "${out_end}.${tab_ext}" \
+		-b 0 -s 2
+else
+	echo -e "\tERROR: energyspec.py was not run. CCF output file does not \
+exist."
+fi
+
+if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
+	[ -e "$bkgd_spec" ]; then
+
+	cd "$out_dir"
+	ascii2pha infile="${out_end}.${tab_ext}" \
+		outfile="${out_end}.pha" \
+		chanpres=yes \
+		dtype=2 \
+		qerror=yes \
+		rows=- \
+		tlmin=0 \
+		detchans=64 \
+		pois=no \
+		telescope=XTE \
+		instrume=PCA \
+		detnam=PCU2 \
+		filter=NONE \
+		exposure=$obs_time \
+		clobber=yes \
+		respfile="$rsp_matrix" \
+		backfile="$bkgd_spec" > $dump_file
+# 	echo "XSPEC data: ${out_file}.pha"
+else
+	echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, and/or \
+background spectrum do not exist."
+fi
+if [ ! -e "${out_end}.pha" ]; then
+	echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
+fi
+echo "data $out_end" >> $xspec_script
+echo "ignore **-3.0 20.0-**" >> $xspec_script
+echo "notice 3.0-20.0" >> $xspec_script
+echo "ignore 11" >> $xspec_script
+echo "cpd /xw" >> $xspec_script
+echo "setplot energy" >> $xspec_script
+echo "systematic 0.005" >> $xspec_script
+echo "xsect vern" >> $xspec_script
+echo "abund wilm" >> $xspec_script
+echo "mod pow & 0 " >> $xspec_script
+echo "iplot eeufspec" >> $xspec_script
+echo "@meanonly_points.pco 0.15 9 $spectrum_plot " >> $xspec_script
+echo "exit" >> $xspec_script
+
+cd "$out_dir"
+xspec < "$xspec_script" > $dump_file
+if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 
 ################################################################################
 
@@ -149,7 +171,7 @@ i=1
 for tbin in {6,13,19,24}; do
 
 	out_end="${out_root}_ccfonly_${tbin}bin"
-	
+
 	## Make individual energy spectra from the CCF
 	if [ -e "${ccf_file}" ]; then
 		python "$exe_dir"/energyspec.py "${ccf_file}" "$out_dir/${out_end}.${tab_ext}" \
@@ -158,10 +180,10 @@ for tbin in {6,13,19,24}; do
 		echo -e "\tERROR: energyspec.py was not run. CCF output file does not" \
 				"exist."
 	fi
-	
+
 	## Put .dat spectra into .pha
 	if [ -e "$rsp_matrix" ] && [ -e "$out_dir/${out_end}.${tab_ext}" ]; then
-		
+
 		cd "$out_dir"
 		ascii2pha infile="${out_end}.${tab_ext}" \
 			outfile="${out_end}.pha" \
@@ -187,7 +209,7 @@ for tbin in {6,13,19,24}; do
 	if [ ! -e "${out_end}.pha" ]; then
 		echo -e "\tERROR: ASCII2pha did NOT run, so ${out_end}.pha does NOT exist."
 	fi
-	
+
 	## Write to xspec script
 	echo "data $i:$i $out_end" >> $xspec_script
 	((i+=1))
@@ -245,10 +267,10 @@ for tbin in {6,13,19,24}; do
 		echo -e "\tERROR: energyspec.py was not run. CCF output file does not \
 exist."
 	fi
-	
+
 	if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
 			[ -e "$bkgd_spec" ]; then
-		
+
 		cd "$out_dir"
 		ascii2pha infile="${out_end}.${tab_ext}" \
 			outfile="${out_end}.pha" \
@@ -276,7 +298,7 @@ and/or background spectrum do not exist."
 	if [ ! -e "${out_end}.pha" ]; then
 		echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
 	fi
-	
+
 	echo "data $i:$i $out_end" >> $xspec_script
 	((i+=1))
 done

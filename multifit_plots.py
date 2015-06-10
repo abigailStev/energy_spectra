@@ -22,64 +22,92 @@ Abigail Stevens, A.L.Stevens at uva.nl, 2015
 
 """
 
+class Parameter(object):
+    def __init__(self, label):
+        self.label = label
+        self.value = np.asarray([])
+        self.error = np.asarray([])
+        self.lo_v = np.asarray([])
+        self.hi_v = np.asarray([])
+        self.pos_err = np.asarray([])
+        self.neg_err = np.asarray([])
+        self.par_num = np.asarray([])
+        self.varying = False
+        self.sinefit = None
+        self.phase = None
+        self.phase_err = None
+
+
+class Phabs(object):
+    def __init__(self):#, nH):
+        self.nH = Parameter(r"phabs: nH ($\times 10^{22}$)")
+
+class Simpl(object):
+    def __init__(self):
+        self.Gamma = Parameter(r"simpl: $\Gamma$")
+        self.FracSctr = Parameter("simpl: FracSctr")
+        self.UpScOnly = Parameter("simpl: UpScOnly")
+
+class Nthcomp(object):
+    def __init__(self):
+        self.Gamma = Parameter(r"nthComp: $\Gamma$")
+        self.kT_e = Parameter(r"nthComp: kT$_{e}$ (keV)")
+        self.kT_bb = Parameter(r"nthComp: kT$_{bb}$ (keV)")
+        self.inp_type = Parameter("nthComp: inp type")
+        self.Redshift = Parameter("nthComp: Redshift")
+        self.norm = Parameter("nthComp: norm.")
+
+class Diskbb(object):
+    def __init__(self):
+        self.Tin = Parameter(r"diskBB: T$_{in}$ (kev)")
+        self.norm = Parameter("diskBB: norm.")
+
+class Bbodyrad(object):
+    def __init__(self):
+        self.kT = Parameter("bbodyrad: kT (keV)")
+        self.norm = Parameter("bbodyrad: norm.")
+
+class Gaussian(object):
+    def __init__(self):
+        self.LineE = Parameter("gaussian: LineE (keV)")
+        self.Sigma = Parameter(r"gaussian: $\sigma$ (keV)")
+        self.norm = Parameter("gaussian: norm.")
+
+
 ################################################################################
 def read_log_file(log_file):
     """
-    Reads the XSPEC log file, with the expectation that chatter is set to 4.
+    Reads the XSPEC log file and assigns parameters to Parameter objects, with
+    the expectation that chatter is set to 4.
 
     Params
     ------
     log_file : string
-        Description.
+        Full path of the XSPEC log file, with chatter set to 4. Assuming the
+        spectral models listed below are the only ones used (or the only
+        interesting ones).
 
     Returns
     -------
-    np.array of floats
-        simpl Gamma
-    np.array of floats
-        Error on simpl Gamma
-    np.array of floats
-        simpl FracSctr
-    np.array of floats
-        Error on simpl FracSctr
-    np.array of floats
-        diskBB Tin
-    np.array of floats
-        Error on diskBB Tin
-    np.array of floats
-        diskBB normalization
-    np.array of floats
-        Error on diskBB normalization
-    np.array of floats
-        gaussian line E
-    np.array of floats
-        Error on gaussian line E
-    np.array of floats
-        gaussian Sigma
-    np.array of floats
-        Error on gaussian Sigma
-    np.array of floats
-        gaussian normalization
-    np.array of floats
-        Error on gaussian normalization
+    Parameter object
+        phabs
+    Parameter object
+        simpl
+    Parameter object
+        diskbb
+    Parameter object
+        gaussian
     int
         Number of spectra for one QPO phase.
 
     """
-    gamma = np.asarray([])
-    gamma_err = np.asarray([])
-    fracsctr = np.asarray([])
-    fracsctr_err = np.asarray([])
-    bb_t = np.asarray([])
-    bb_t_err = np.asarray([])
-    bb_norm = np.asarray([])
-    bb_norm_err = np.asarray([])
-    line_e = np.asarray([])
-    line_e_err = np.asarray([])
-    sigma = np.asarray([])
-    sigma_err = np.asarray([])
-    e_norm = np.asarray([])
-    e_norm_err = np.asarray([])
+
+    phabs = Phabs()
+    simpl = Simpl()
+    diskbb = Diskbb()
+    nth = Nthcomp()
+    bbrad = Bbodyrad()
+    gauss = Gaussian()
 
     ###########################
     ## Reading in the log file
@@ -88,85 +116,191 @@ def read_log_file(log_file):
     print ""
     with open(log_file, 'r') as f:
         for line in f:
-            ## Reading simPL parameters
-            if "simpl" in line:
+
+            ## Reading in phabs parameter
+            if "phabs" in line and "nH" in line:
+                phabs.nH.value = float(line.split()[6])
+                phabs.nH.par_num = np.append(phabs.nH.par_num, \
+                        int(line.split()[1]))
+
+            ## Reading simpl parameters
+            elif "simpl" in line:
                 if "Gamma" in line:
-                    gamma = np.append(gamma, float(line.split()[5]))
-                    gamma_err = np.append(gamma_err, float(line.split()[7]))
+                    simpl.Gamma.value = np.append(simpl.Gamma.value, \
+                            float(line.split()[5]))
+                    simpl.Gamma.par_num = np.append(phabs.nH.par_num, \
+                            int(line.split()[1]))
 
                 elif "FracSctr" in line:
-                    fracsctr = np.append(fracsctr, float(line.split()[5]))
-                    fracsctr_err = np.append(fracsctr_err,
-                                             float(line.split()[7]))
+                    simpl.FracSctr.value = np.append(simpl.FracSctr.value, \
+                            float(line.split()[5]))
+                    simpl.FracSctr.par_num = np.append(simpl.FracSctr.par_num, \
+                            int(line.split()[1]))
 
-            ## Reading diskBB parameters
-            elif "diskbb" in line:
-                if "Tin" in line:
-                    bb_t = np.append(bb_t, float(line.split()[6]))
-                    bb_t_err = np.append(bb_t_err, float(line.split()[8]))
+            ## Reading nthComp parameters
+            elif "nthComp" in line:
+                if "Gamma" in line:
+                    nth.Gamma.value = np.append(nth.Gamma.value, \
+                            float(line.split()[5]))
+                    nth.Gamma.par_num = np.append(nth.Gamma.par_num, \
+                            int(line.split()[1]))
 
                 elif "norm" in line:
-                    bb_norm = np.append(bb_norm, float(line.split()[5]))
-                    # bb_norm_err = np.append(bb_norm_err, float(line.split()[7]))
+                    nth.norm.value = np.append(nth.norm.value, \
+                            float(line.split()[5]))
+                    nth.norm.par_num = np.append(nth.norm.par_num, \
+                            int(line.split()[1]))
 
+            ## Reading diskbb parameters
+            elif "diskbb" in line:
+                if "Tin" in line:
+                    diskbb.Tin.value = np.append(diskbb.Tin.value, \
+                            float(line.split()[6]))
+                    diskbb.Tin.par_num = np.append(diskbb.Tin.par_num, \
+                        int(line.split()[1]))
+
+                elif "norm" in line:
+                    diskbb.norm.value = np.append(diskbb.norm.value, \
+                            float(line.split()[5]))
+                    diskbb.norm.par_num = np.append(diskbb.norm.par_num, \
+                            int(line.split()[1]))
+
+            ## Reading bbodyrad parameters
+            elif "bbodyrad" in line and " 4 " in line:
+                if "kT" in line:
+                    bbrad.kT.value = np.append(bbrad.kT.value, \
+                            float(line.split()[6]))
+                    bbrad.kT.par_num = np.append(bbrad.kT.par_num, \
+                            int(line.split()[1]))
+                elif "norm" in line:
+                    bbrad.norm.value = np.append(bbrad.norm.value, \
+                            float(line.split()[5]))
+                    bbrad.norm.par_num = np.append(bbrad.norm.par_num, \
+                            int(line.split()[1]))
 
             ## Reading gaussian parameters
             elif "gaussian" in line:
                 if "LineE" in line:
-                    line_e = np.append(line_e, float(line.split()[6]))
-                    line_e_err = np.append(line_e_err, float(line.split()[8]))
+                    gauss.LineE.value = np.append(gauss.LineE.value, \
+                            float(line.split()[6]))
+                    gauss.LineE.par_num = np.append(gauss.LineE.par_num, \
+                            int(line.split()[1]))
 
                 elif "Sigma" in line:
-                    sigma = np.append(sigma, float(line.split()[6]))
-                    sigma_err = np.append(sigma_err, float(line.split()[8]))
+                    gauss.Sigma.value = np.append(gauss.Sigma.value, \
+                            float(line.split()[6]))
+                    gauss.Sigma.par_num = np.append(gauss.Sigma.par_num, \
+                            int(line.split()[1]))
 
                 elif "norm" in line:
-                    e_norm = np.append(e_norm, float(line.split()[5]))
-                    e_norm_err = np.append(e_norm_err, float(line.split()[7]))
+                    gauss.norm.value = np.append(gauss.norm.value, \
+                            float(line.split()[5]))
+                    gauss.norm.par_num = np.append(gauss.norm.par_num, \
+                            int(line.split()[1]))
 
-    ###########################################################
-    ## Assert statements, to ensure the log was read correctly
-    ###########################################################
 
-    assert len(gamma) == len(gamma_err), "ERROR: Issue with reading log file. "\
-            "Length of Gamma != length of error on Gamma."
-    assert len(fracsctr) == len(fracsctr_err), "ERROR: Issue with reading log "\
-            "file. Length of FracSctr != length of error on FracSctr."
-    assert len(bb_t) == len(bb_t_err), "ERROR: Issue with reading log file. "\
-            "Length of Tin != length of error on Tin."
-    # assert len(bb_norm) == len(bb_norm_err), "ERROR: Issue with reading log "\
-    #         "file. Length of diskbb norm != length of error on diskbb norm."
-    assert len(line_e) == len(line_e_err), "ERROR: Issue with reading log "\
-            "file. Length of LineE != length of error on LineE."
-    assert len(sigma) == len(sigma_err), "ERROR: Issue with reading log file. "\
-            "Length of Sigma != length of error on Sigma."
-    assert len(e_norm) == len(e_norm_err), "ERROR: Issue with reading log "\
-            "file. Length of LineE norm != length of error on LineE norm."
+    num_spectra = len(nth.Gamma.value)
 
-    assert len(gamma) == len(fracsctr), "ERROR: Issue with reading log file. "\
-            "Length of gamma != length of FracSctr."
-    assert len(gamma) == len(bb_t), "ERROR: Issue with reading log file. "\
-            "Length of gamma != length of Tin."
-    assert len(gamma) == len(bb_norm), "ERROR: Issue with reading log file. "\
-            "Length of gamma != length of diskbb norm."
-    assert len(gamma) == len(line_e), "ERROR: Issue with reading log file. "\
-            "Length of gamma != length of LineE."
-    assert len(gamma) == len(sigma), "ERROR: Issue with reading log file. "\
-            "Length of gamma != length of Sigma."
-    assert len(gamma) == len(e_norm), "ERROR: Issue with reading log file. "\
-            "Length of gamma != length of LineE norm."
+    ###################################################################
+    ## If parameter is tied across phases, assign it the correct error
+    ###################################################################
 
-    num_spectra = len(gamma)
+    # if simpl.Gamma.value[0] != simpl.Gamma.value[1]:
+    #     simpl.Gamma.varying = True
+    #
+    # if simpl.FracSctr.value[0] != simpl.FracSctr.value[1]:
+    #     simpl.FracSctr.varying = True
 
-    return gamma, gamma_err, fracsctr, fracsctr_err, bb_t, bb_t_err, bb_norm, \
-        bb_norm_err, line_e, line_e_err, sigma, sigma_err, e_norm, e_norm_err, \
-        num_spectra
+    # if diskbb.Tin.value[0] != diskbb.Tin.value[1]:
+    #     diskbb.Tin.varying = True
+    #
+    # if diskbb.norm.value[0] != diskbb.norm.value[1]:
+    #     diskbb.norm.varying = True
+
+    if nth.Gamma.value[0] != nth.Gamma.value[1]:
+        nth.Gamma.varying = True
+
+    if nth.norm.value[0] != nth.norm.value[1]:
+        nth.norm.varying = True
+
+    if bbrad.kT.value[0] != bbrad.kT.value[1]:
+        bbrad.kT.varying = True
+
+    if bbrad.norm.value[0] != bbrad.norm.value[1]:
+        bbrad.norm.varying = True
+
+    if gauss.LineE.value[0] != gauss.LineE.value[1]:
+        gauss.LineE.varying = True
+
+    if gauss.Sigma.value[0] != gauss.Sigma.value[1]:
+        gauss.Sigma.varying = True
+
+    if gauss.norm.value[0] == gauss.norm.value[1]:
+        gauss.norm.varying = True
+
+    ##################################
+    ## Reading in errors from 'chain'
+    ##################################
+
+    # error_file = "/Users/abigailstevens/Dropbox/Research/energy_spectra/out_es/GX339-BQPO_NTH-2BB_errors.txt"
+    error_file = "/Users/abigailstevens/Dropbox/Research/energy_spectra/out_es/GX339-BQPO-NTH-2BB-longwalker.txt"
+    par_nums = np.asarray([])
+    lo_v = np.asarray([])
+    hi_v = np.asarray([])
+    pos_err = np.asarray([])
+    neg_err = np.asarray([])
+
+    with open(error_file, 'r') as f:
+        for line in f:
+            par_nums = np.append(par_nums, int(line.split()[0]))
+            lo_v = np.append(lo_v, float(line.split()[1]))
+            hi_v = np.append(hi_v, float(line.split()[2]))
+            tup = line.split()[-1].replace('(', '').replace(')', '').split(',')
+            neg_err = np.append(neg_err, float(tup[0]))
+            pos_err = np.append(pos_err, float(tup[1]))
+
+    temp_mask = np.array([], dtype=bool)
+    if nth.Gamma.varying:
+        for elt in par_nums:
+            if elt in nth.Gamma.par_num:
+                temp_mask = np.append(temp_mask, True)
+            else:
+                temp_mask = np.append(temp_mask, False)
+        nth.Gamma.pos_err = pos_err[temp_mask]
+        nth.Gamma.neg_err = np.abs(neg_err[temp_mask])
+        nth.Gamma.lo_v = lo_v[temp_mask]
+        nth.Gamma.hi_v = hi_v[temp_mask]
+
+    temp_mask = np.array([], dtype=bool)
+    if nth.norm.varying:
+        for elt in par_nums:
+            if elt in nth.norm.par_num:
+                temp_mask = np.append(temp_mask, True)
+            else:
+                temp_mask = np.append(temp_mask, False)
+        nth.norm.pos_err = pos_err[temp_mask]
+        nth.norm.neg_err = np.abs(neg_err[temp_mask])
+        nth.norm.lo_v = lo_v[temp_mask]
+        nth.norm.hi_v = hi_v[temp_mask]
+
+    temp_mask = np.array([], dtype=bool)
+    if bbrad.kT.varying:
+        for elt in par_nums:
+            if elt in bbrad.kT.par_num:
+                temp_mask = np.append(temp_mask, True)
+            else:
+                temp_mask = np.append(temp_mask, False)
+        bbrad.kT.pos_err = pos_err[temp_mask]
+        bbrad.kT.neg_err = np.abs(neg_err[temp_mask])
+        bbrad.kT.lo_v = lo_v[temp_mask]
+        bbrad.kT.hi_v = hi_v[temp_mask]
+
+    # return phabs, simpl, diskbb, gauss, num_spectra
+    return phabs, nth, bbrad, diskbb, gauss, num_spectra
 
 
 ################################################################################
-def make_plots_var3(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
-                    gamma_err, param, param_err, fs_sinefit, param_sinefit,
-                    param_title):
+def make_plots_var3(plot_name, num_spectra, param1, param2, param3):
     """
     Making plots of fit parameters vs phase for three co-varying parameters.
 
@@ -177,33 +311,41 @@ def make_plots_var3(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
 
     phase = np.arange(num_spectra) / 23.646776
     tinybins = np.arange(-0.01, 1.03, 0.01)
-    fs_max = tinybins[np.argmax(fs_sinefit)]
-    param_max = tinybins[np.argmax(param_sinefit)]
+    param1_max = -1
+    param2_max = -1
+    param3_max = -1
+
+    if param1.sinefit is not None:
+        param1_max = tinybins[np.argmax(param1.sinefit)]
+    if param2.sinefit is not None:
+        param2_max = tinybins[np.argmax(param2.sinefit)]
+    if param3.sinefit is not None:
+        param3_max = tinybins[np.argmax(param3.sinefit)]
 
 
     print "Plot file: %s" % plot_name
 
     fig = plt.figure(figsize=(12, 10))
 
-    #####################
-    ## Plotting FracSctr
-    #####################
+    ########################
+    ## Plotting parameter 1
+    ########################
 
     ax1 = fig.add_subplot(311)
-
-    ax1.plot(tinybins, fs_sinefit, c='black', lw=2)
-    ax1.errorbar(phase, fracsctr, yerr=fracsctr_err, lw=0, ecolor='red', \
+    ax1.errorbar(phase, param1.value, yerr=[param1.neg_err, param1.pos_err], lw=0, ecolor='red', \
                  marker='.', ms=10, mec='red', mfc='red', elinewidth=2,
                  capsize=2)
-    ax1.vlines(fs_max, 0.12, 0.24, lw=1, linestyles='dashed')
-    # ax1.vlines(fs_max - 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
-    # ax1.vlines(fs_max + 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
+    if param1.sinefit is not None:
+        ax1.plot(tinybins, param1.sinefit, c='black', lw=2)
+        ax1.vlines(param1_max, 0.06, 0.2, lw=1, linestyles='dashed')
+
     ax1.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
                     labelbottom=False, labeltop=False)
     ax1.tick_params(axis='y', labelsize=18, left=True, right=True, \
                     labelleft=True, labelright=False)
-    # ax1.set_ylabel('Scattering \nfraction', fontproperties=font_prop)
-    ax1.set_ylabel(r'simpl: FracSctr', fontproperties=font_prop)
+    ax1.set_ylabel(param1.label, fontproperties=font_prop)
+
+    ax1.set_ylim(0.06, 0.2)
 
     ax1.set_xlim(-0.01 , 1.02)
     y_maj_loc = ax1.get_yticks()
@@ -212,24 +354,26 @@ def make_plots_var3(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
     ax1.yaxis.set_minor_locator(yLocator1)
     ax1.xaxis.set_minor_locator(xLocator)
 
-    #####################
-    ## Plotting diskBB T
-    #####################
+    ########################
+    ## Plotting parameter 2
+    ########################
 
     ax2 = fig.add_subplot(312, sharex=ax1)
-
-    ax2.plot(tinybins, param_sinefit, c='black', lw=2)
-    ax2.errorbar(phase, param, yerr=param_err, lw=0, ecolor='green', \
+    ax2.errorbar(phase, param2.value, yerr=[param2.neg_err, param2.pos_err], lw=0, ecolor='green', \
                  marker='.', ms=10, mec='green', mfc='green', elinewidth=2,
                  capsize=2)
-    ax2.vlines(param_max, 0.798, 0.810, lw=1, linestyles='dashed')
-    # ax2.vlines(param_max - 4.3787e-03, 0.798, 0.810, lw=1, linestyles='dotted')
-    # ax2.vlines(param_max + 4.3787e-03, 0.798, 0.810, lw=1, linestyles='dotted')
+    if param2.sinefit is not None:
+        ax2.plot(tinybins, param2.sinefit, c='black', lw=2)
+        ax2.vlines(param2_max, 2.1, 2.7, lw=1, linestyles='dashed')
+
     ax2.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
                     labelbottom=False, labeltop=False)
     ax2.tick_params(axis='y', labelsize=18, left=True, right=True, \
                     labelleft=True, labelright=False)
-    ax2.set_ylabel(param_title, fontproperties=font_prop)
+    ax2.set_ylabel(param2.label, fontproperties=font_prop)
+
+    ax1.set_ylim(0.06, 0.2)
+    ax2.set_ylim(2.1, 2.7)
 
     ax2.set_xlim(-0.01, 1.02)
     y_maj_loc = ax2.get_yticks()
@@ -241,26 +385,34 @@ def make_plots_var3(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
     ax2.xaxis.set_minor_locator(xLocator)
 
     ##################
-    ## Plotting Gamma
+    ## Plotting parameter 3
     ##################
 
     ax3 = fig.add_subplot(313, sharex=ax1)
 
-    ax3.errorbar(phase, gamma, yerr=gamma_err, lw=0, ecolor='blue', \
+    ax3.errorbar(phase, param3.value, yerr=[param3.neg_err, param3.pos_err], lw=0, ecolor='blue', \
                  marker='.', ms=10, mec='blue', mfc='blue', elinewidth=2,
                  capsize=2)
+    if param3.sinefit is not None:
+        ax3.plot(tinybins, param3.sinefit, c='black', lw=2)
+        ax3.vlines(param3_max, 0.565, 0.58, lw=1, linestyles='dashed')
     ax3.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
                     labelbottom=True, labeltop=False)
     ax3.tick_params(axis='y', labelsize=18, left=True, right=True, \
                     labelleft=True, labelright=False)
+    ax3.set_ylabel(param3.label, fontproperties=font_prop)
     ax3.set_xlabel('Normalized QPO phase', fontproperties=font_prop)
-    ax3.set_ylabel(r'simpl: $\Gamma$', fontproperties=font_prop)
 
-    # 	ax3.set_xlim(bins[0]-0.5,bins[-1]+0.5)
-    y_maj_loc = ax3.get_yticks()
-    ax3.set_yticks(y_maj_loc[0:-1])
+    ax1.set_ylim(0.06, 0.2)
+    ax2.set_ylim(2.1, 2.7)
+    ax3.set_ylim(0.565, 0.58)
+
+    # y_maj_loc = ax3.get_yticks()
+    # ax3.set_yticks(y_maj_loc[0:-1])
+    y_maj_loc = [0.565, 0.570, 0.575, 0.58]
+    ax3.set_yticks(y_maj_loc)
     ax3.set_xlim(-0.01, 1.02)
-    y_min_mult = 0.2 * (y_maj_loc[1] - y_maj_loc[0])
+    y_min_mult = 0.1 * (y_maj_loc[1] - y_maj_loc[0])
     yLocator3 = MultipleLocator(y_min_mult)  ## loc of minor ticks on y-axis
     ax3.yaxis.set_minor_locator(yLocator3)
     ax3.set_xticks(np.arange(0, 1.05, 0.25))
@@ -274,8 +426,7 @@ def make_plots_var3(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
 
 
 ################################################################################
-def make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, param, \
-                    param_err, param_title):
+def make_plots_var2(plot_name, num_spectra, param1, param2):
     """
     Making plots of fit parameters vs phase for two co-varying parameters,
     fracsctr and another.
@@ -286,6 +437,14 @@ def make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, param, \
     xLocator = MultipleLocator(0.05)  ## loc of minor ticks on y-axis
 
     phase = np.arange(num_spectra) / 23.646776
+    tinybins = np.arange(-0.01, 1.03, 0.01)
+    param1_max = -1
+    param2_max = -1
+
+    if param1.sinefit is not None:
+        param1_max = tinybins[np.argmax(param1.sinefit)]
+    if param2.sinefit is not None:
+        param2_max = tinybins[np.argmax(param2.sinefit)]
 
     print "Plot file: %s" % plot_name
 
@@ -296,17 +455,22 @@ def make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, param, \
     #####################
 
     ax1 = fig.add_subplot(211)
-    ax1.errorbar(phase, fracsctr, yerr=fracsctr_err, lw=0, ecolor='red', \
-                 marker='.', ms=10, mec='red', mfc='red', elinewidth=2,
-                 capsize=2)
+    ax1.errorbar(phase, param1.value, yerr=[param1.neg_err, param1.pos_err], \
+            lw=0, ecolor='green', marker='.', ms=10, mec='green', mfc='green', \
+            elinewidth=2, capsize=2)
+    if param1.sinefit is not None:
+        ax1.plot(tinybins, param1.sinefit, c='black', lw=2)
+        ax1.vlines(param1_max, 0.06, 0.2, lw=1, linestyles='dashed')
+    #   ax1.vlines(param1_max - 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
+    #   ax1.vlines(param1_max + 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
+
+    ax1.set_ylim(0.06, 0.2)
     ax1.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
                     labelbottom=False, labeltop=False)
     ax1.tick_params(axis='y', labelsize=18, left=True, right=True, \
                     labelleft=True, labelright=False)
-    # ax1.set_ylabel('Scattering \nfraction', fontproperties=font_prop)
-    ax1.set_ylabel(r'simpl: FracSctr', fontproperties=font_prop)
+    ax1.set_ylabel(param1.label, fontproperties=font_prop)
 
-    # 	ax1.set_xlim(phase[0]-0.01, phase[-1]+0.01)
     y_maj_loc = ax1.get_yticks()
     ax1.set_yticks(y_maj_loc[1:])
     yLocator1 = MultipleLocator(.01)  ## loc of minor ticks on y-axis
@@ -314,23 +478,29 @@ def make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, param, \
     ax1.set_xticks(np.arange(0, 1.05, 0.25))
     ax1.xaxis.set_minor_locator(xLocator)
 
-    #####################
-    ## Plotting diskBB T
-    #####################
+    #######################################################
+    ## Plotting other param (diskBB Tin, diskBB norm, ...)
+    #######################################################
 
     ax2 = fig.add_subplot(212, sharex=ax1)
-    ax2.errorbar(phase, param, yerr=param_err, lw=0, ecolor='green', \
-                 marker='.', ms=10, mec='green', mfc='green', elinewidth=2,
-                 capsize=2)
+    ax2.errorbar(phase, param2.value, yerr=[param2.neg_err, param2.pos_err], \
+            lw=0, ecolor='blue', marker='.', ms=10, mec='blue', mfc='blue', \
+            elinewidth=2, capsize=2)
     # 	ax2.set_xlim(bins[0]-0.5,bins[-1]+0.5)
+    if param2.sinefit is not None:
+        ax2.plot(tinybins, param2.sinefit, c='black', lw=2)
+        ax2.vlines(param2_max, 0.55, 0.75, lw=1, linestyles='dashed')
+    #   ax2.vlines(param1_max - 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
+    #   ax2.vlines(param1_max + 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
+    ax2.set_ylim(0.55, 0.75)
     ax2.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
                     labelbottom=True, labeltop=False)
     ax2.tick_params(axis='y', labelsize=18, left=True, right=True, \
                     labelleft=True, labelright=False)
-    ax2.set_ylabel(param_title, fontproperties=font_prop)
-    ax2.set_xlabel('Normalized phase', fontproperties=font_prop)
+    ax2.set_ylabel(param2.label, fontproperties=font_prop)
 
-    # 	ax1.set_xlim(phase[0]-0.01, phase[-1]+0.01)
+    ax2.set_xlabel('Normalized QPO phase', fontproperties=font_prop)
+
     y_maj_loc = ax2.get_yticks()
     ax2.set_yticks(y_maj_loc[0:-1])
     yLocator2 = MultipleLocator(.001)  ## loc of minor ticks on y-axis
@@ -342,7 +512,7 @@ def make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, param, \
     # 	plt.show()
     plt.savefig(plot_name)
     plt.close()
-    # subprocess.call(['open', plot_name])
+    subprocess.call(['open', plot_name])
 
 
 ################################################################################
@@ -400,39 +570,38 @@ def sine_residuals(p, data, data_err, t):
 
 
 ################################################################################
-def get_phase(sed_parameters, sed_err, num_spectra):
+def get_phase(sed_parameter, num_spectra):
     """
     Fitting a sine wave to an energy spectra fit parameter to determine the
     phase of the parameter changes.
 
     Params
     ------
-    sed_parameters : np.array of floats
-        The spectral energy distribution (energy spectra) parameters fitted by
-        XSPEC over the QPO phase.
-    sed_err : np.array of floats
-        The error on each data point of sed_parameters.
+    sed_parameter : Parameter object
+        Description
     num_spectra : int
         The number of energy spectra in use, i.e. the length of
         sed_fit_parameters.
 
     Return
     ------
-    float
-        The phase of the best-fit sine wave.
-    float
-        The error on the phase of the best-fit sine wave.
+    Parameter
+        Description.
+
     """
     t = np.arange(num_spectra) / 23.646776
-    p = [1.0, 0.0, np.mean(sed_parameters)]  ## Amplitude, phase shift, mean
+    p = [1.0, 0.0, np.mean(sed_parameter.value)]  ## Amplitude, phase shift, mean
 
-    p_best = leastsq(sine_residuals, p, args=(sed_parameters, sed_err, t), \
+    sed_parameter.error = np.mean((sed_parameter.pos_err, sed_parameter.neg_err), axis=0)
+    print np.shape(sed_parameter.error)
+
+    p_best = leastsq(sine_residuals, p, args=(sed_parameter.value, sed_parameter.error, t), \
             full_output=1)
-    print "P best:", p_best
+    # print "P best:", p_best
     best_fit = p_best[0]
-    print "Best fit:", best_fit
+    # print "Best fit:", best_fit
 
-    plt.errorbar(t, sed_parameters, xerr=None, yerr=sed_err)
+    plt.errorbar(t, sed_parameter.value, xerr=None, yerr=sed_parameter.error)
     plt.plot(t, sinewave(t, best_fit))
     plt.xlim(0,1)
     # plt.show()
@@ -440,20 +609,20 @@ def get_phase(sed_parameters, sed_err, num_spectra):
     ## Error on phase from S. Vaughan 2013 p 168
     bonus_matrix = p_best[1]  ## A Jacobian approximation to the Hessian of the
             ## least squares objective function.
-    resid_var = np.var(sine_residuals(best_fit, sed_parameters, sed_err, t), \
-            ddof=1)
+    resid_var = np.var(sine_residuals(best_fit, sed_parameter.value, \
+            sed_parameter.error, t), ddof=1)
     ## As outlined in the scipy.optimize.leastsq documentation, multiply the
     ## bonus matrix by the variance of the residuals to get the covariance
     ## matrix.
-    print "Bonus matrix:", bonus_matrix
-    print "Resid var:", resid_var
+    # print "Bonus matrix:", bonus_matrix
+    # print "Resid var:", resid_var
     cov_matrix = bonus_matrix * resid_var
 
-    tiny_bins = np.arange(-0.01, 1.03, 0.01)
-    smooth_sine_fit = sinewave(tiny_bins, best_fit)
+    sed_parameter.sinefit = sinewave(np.arange(-0.01, 1.03, 0.01), best_fit)
+    sed_parameter.phase = best_fit[1] / (2.0 * np.pi)
+    sed_parameter.phase_err = np.sqrt(cov_matrix[1][1]) / (2.0 * np.pi)
 
-    return best_fit[1] / (2.0 * np.pi), np.sqrt(cov_matrix[1][1]) / \
-            (2.0 * np.pi), smooth_sine_fit
+    return sed_parameter
 
 
 ################################################################################
@@ -472,91 +641,68 @@ def main(log_file):
     ## Reading in the log file to data arrays
     ##########################################
 
-    gamma, gamma_err, fracsctr, fracsctr_err, bb_t, bb_t_err, bb_norm, \
-            bb_norm_err, line_e, line_e_err, sigma, sigma_err, e_norm, \
-            e_norm_err, num_spectra = read_log_file(log_file)
-
+    # phabs, simpl, diskbb, gauss, num_spectra = read_log_file(log_file)
+    phabs, nth, bbrad, diskbb, gauss, num_spectra = read_log_file(log_file)
     print "Number of spectra:", num_spectra
 
-    # print "norm(BB) = ", bb_norm[1]
-    # print np.mean(bb_norm)
-    # print np.min(bb_norm)
-    # print np.max(bb_norm)
-
-    #####################################################
-    ## If parameter is tied, assign it the correct error
-    #####################################################
-
-    var_gamma = True
-    var_fracsctr = True
-    var_bb_t = True
-    var_bb_norm = True
-    var_line_e = True
-    var_sigma = True
-    var_e_norm = True
-
-    if gamma[0] == gamma[1] and gamma_err[0].is_integer():
-        gamma_err = np.repeat(gamma_err[0], num_spectra)
-        var_gamma = False
-
-    if fracsctr[0] == fracsctr[1] and fracsctr_err[0].is_integer():
-        fracsctr_err = np.repeat(fracsctr_err[0], num_spectra)
-        var_fracsctr = False
-
-    if (len(bb_t) == 1 or bb_t[0] == bb_t[1]) and bb_t[0].is_integer():
-        bb_t_err = np.repeat(bb_t_err[0], num_spectra)
-        var_bb_t = False
-
-    if (bb_norm[0] == bb_norm[1] or len(bb_norm) == 1) and \
-            (np.size(bb_norm_err) == 0 or bb_norm_err[0].is_integer()):
-        if np.size(bb_norm_err) == 0:
-            bb_norm_err = [0.0]
-        bb_norm_err = np.repeat(bb_norm_err[0], num_spectra)
-        var_bb_norm = False
-
-    if line_e[0] == line_e[1] and line_e_err[0].is_integer():
-        line_e_err = np.repeat(line_e_err[0], num_spectra)
-        var_line_e = False
-
-    if sigma[0] == sigma[1] and sigma_err[0].is_integer():
-        sigma_err = np.repeat(sigma_err[0], num_spectra)
-        var_sigma = False
-
-    if e_norm[0] == e_norm[1] and e_norm_err[0].is_integer():
-        e_norm_err = np.repeat(e_norm_err[0], num_spectra)
-        var_e_norm = False
+    # print "norm(BB) = ", bb_norm_1[1]
+    # print np.mean(bb_norm_1)
+    # print np.min(bb_norm_1)
+    # print np.max(bb_norm_1)
 
     ######################################################################
     ## Computing the phase of the best-fit sine wave and phase difference
     ######################################################################
 
-    fracsctr_phase, fracsctr_phase_err, fracsctr_sinefit = get_phase(fracsctr,\
-            fracsctr_err, num_spectra)
+    # simpl.FracSctr = get_phase(simpl.FracSctr, num_spectra)
+    #
+    # print "simpl fracsctr phase: %.4e +- %.4e" % (simpl.FracSctr.phase, \
+    #         simpl.FracSctr.phase_err)
+    #
+    # if diskbb.Tin.varying:
+    #     diskbb.Tin = get_phase(diskbb.Tin, num_spectra)
+    #     phase_2 = diskbb.Tin.phase
+    #     print "diskBB Tin phase: %.4e +- %.4e" % (diskbb.Tin.phase, \
+    #             diskbb.Tin.phase_err)
+    #
+    # if diskbb.norm.varying:
+    #     print "\tIN HERE"
+    #     diskbb.norm = get_phase(diskbb.norm, num_spectra)
+    #     phase_2 = diskbb.norm.phase
+    #     print "diskBB norm. phase: %.4e +- %.4e" % (diskbb.norm.phase, \
+    #             diskbb.norm.phase_err)
+    #
+    # phase_diff = simpl.FracSctr.phase - phase_2
 
-    print "simpl fracsctr phase: %.4e +- %.4e" % (fracsctr_phase, \
-            fracsctr_phase_err)
+    nth.norm = get_phase(nth.norm, num_spectra)
+    nth.Gamma = get_phase(nth.Gamma, num_spectra)
+    bbrad.kT = get_phase(bbrad.kT, num_spectra)
+    print nth.norm.phase
+    print nth.Gamma.phase
+    print bbrad.kT.phase
 
-    if var_bb_t:
-        bb_t_phase, bb_t_phase_err, bb_t_sinefit = get_phase(bb_t, bb_t_err, \
-                num_spectra)
-        phase_2 = bb_t_phase
-        print "diskBB Tin phase: %.4e +- %.4e" % (bb_t_phase, bb_t_phase_err)
 
-    if var_bb_norm:
-        print "\tIN HERE"
-        bb_norm_phase, bb_norm_phase_err, bb_norm_sinefit = get_phase(bb_norm, \
-                bb_norm_err, num_spectra)
-        phase_2 = bb_norm_phase
-        print "diskBB norm. phase: %.4e +- %.4e" % (bb_norm_phase, \
-                bb_norm_phase_err)
-
-    phase_diff = fracsctr_phase - phase_2
-    if phase_diff < 0:
-        phase_diff += 1.0
-    elif phase_diff > 1.0:
-        phase_diff -= 1.0
-
-    print "Phase diff: %.4f" % phase_diff
+    # if bbrad.kT.varying:
+    #     bbrad.kT = get_phase(bbrad.kT, num_spectra)
+    #     phase_2 = bbrad.kT.phase
+    #     print "BB T phase: %.4e +- %.4e" % (bbrad.kT.phase, \
+    #             bbrad.kT.phase_err)
+    # print bbrad.norm.varying
+    #
+    # if bbrad.norm.varying:
+    #     bbrad.norm = get_phase(bbrad.norm, num_spectra)
+    #     phase_2 = bbrad.norm.phase
+    #     print "BB norm. phase: %.4e +- %.4e" % (bbrad.norm.phase, \
+    #             bbrad.norm.phase_err)
+    #
+    # phase_diff = nth.norm.phase - phase_2
+    #
+    # if phase_diff < 0:
+    #     phase_diff += 1.0
+    # elif phase_diff > 1.0:
+    #     phase_diff -= 1.0
+    #
+    # print "Phase diff: %.4f" % phase_diff
 
     ###################
     ## Make the plots!
@@ -564,23 +710,32 @@ def main(log_file):
 
     plot_name = log_file.replace('.log', '.eps')
 
-    if var_fracsctr and var_gamma and var_bb_t:
-        make_plots_var3(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
-                gamma_err, bb_t, bb_t_err, fracsctr_sinefit, bb_t_sinefit, \
-                r"diskBB: T$_{in}$ (kev)")
-    elif var_fracsctr and var_gamma and var_bb_norm:
-        make_plots_var3(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
-                gamma_err, bb_norm, bb_norm_err, fracsctr_sinefit, \
-                bb_norm_sinefit, "diskBB: norm.")
-    elif var_fracsctr and var_gamma:
-        make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, gamma, \
-                gamma_err, r"simpl: $\Gamma$")
-    elif var_fracsctr and var_bb_t:
-        make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, bb_t, \
-                bb_t_err, r"diskBB: T$_{in}$ (kev)")
-    elif var_fracsctr and var_bb_norm:
-        make_plots_var2(plot_name, num_spectra, fracsctr, fracsctr_err, bb_norm,
-                bb_norm_err, "diskBB: norm.")
+    # if simpl.FracSctr.varying and simpl.Gamma.varying and diskbb.Tin.varying:
+    #     make_plots_var3(plot_name, num_spectra, simpl.FracSctr, diskbb.Tin, \
+    #             simpl.Gamma)
+    # elif simpl.FracSctr.varying and simpl.Gamma.varying and diskbb.norm.varying:
+    #     make_plots_var3(plot_name, num_spectra, simpl.FracSctr, diskbb.norm, \
+    #             simpl.Gamma)
+    # elif simpl.FracSctr.varying and simpl.Gamma.varying:
+    #     make_plots_var2(plot_name, num_spectra, simpl.FracSctr, simpl.Gamma)
+    # elif simpl.FracSctr.varying and diskbb.Tin.varying:
+    #     make_plots_var2(plot_name, num_spectra, simpl.FracSctr,diskbb.Tin)
+    # elif simpl.FracSctr.varying and diskbb.norm.varying:
+    #     make_plots_var2(plot_name, num_spectra, simpl.FracSctr, diskbb.norm)
+
+    if nth.norm.varying and nth.Gamma.varying and bbrad.kT.varying:
+        print "in here!!"
+        make_plots_var3(plot_name, num_spectra, nth.norm, \
+                nth.Gamma, bbrad.kT)
+    elif nth.norm.varying and nth.Gamma.varying and bbrad.norm.varying:
+        make_plots_var3(plot_name, num_spectra, nth.norm, bbrad.norm, \
+                nth.Gamma)
+    elif nth.norm.varying and nth.Gamma.varying:
+        make_plots_var2(plot_name, num_spectra, nth.norm, nth.Gamma)
+    elif nth.norm.varying and bbrad.kT.varying:
+        make_plots_var2(plot_name, num_spectra, nth.norm, bbrad.kT)
+    elif nth.norm.varying and bbrad.norm.varying:
+        make_plots_var2(plot_name, num_spectra, nth.norm, bbrad.norm)
 
 
 ################################################################################

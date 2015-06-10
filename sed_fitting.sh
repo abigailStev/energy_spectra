@@ -5,7 +5,7 @@
 ## Bash script for phase-resolved spectroscopy: run energyspec.py to make phase-
 ## resolved energy spectra, make an XSPEC energy spectrum fitting script, run 
 ## the script, read off fit data from log file with multispec_plots.py, and make
-## plots of variables changing with phase.
+## plots of fit parameters changing with QPO phase.
 ##
 ## Example call: ./sed_fitting.sh GX339-BQPO 64 64 0 150131
 ##
@@ -26,6 +26,7 @@ if (( $# != 5 )); then
     exit
 fi
 
+## ./sed_fitting.sh GX339-BQPO 64 64 0 150526
 prefix=$1
 dt=$2
 numsec=$3
@@ -57,9 +58,9 @@ spec_type=0  # 0 for mean+ccf, 1 for ccf, 2 for mean
 xspec_script="$out_dir/${prefix}_${day}_xspec.xcm"
 spectrum_plot="${prefix}_${day}_allspectra"
 
-ccf_file="$in_dir/out_ccf/${prefix}_${day}_t${dt}_${numsec}sec.fits"
+ccf_file="$in_dir/out_ccf/${prefix}_150401_t${dt}_${numsec}sec.fits"
 if (( $testing==1 )); then
-	ccf_file="$in_dir/out_ccf/test_${prefix}_${day}_t${dt}_${numsec}sec.fits"
+	ccf_file="$in_dir/out_ccf/test_${prefix}_150401_t${dt}_${numsec}sec.fits"
 fi
 
 tab_ext="dat"
@@ -82,8 +83,8 @@ cd "$out_dir"
 ## Generating energy spectra at each phase bin
 ###############################################
 
-# for tbin in {6,13,19,24}; do
-for (( tbin=6; tbin<=30; tbin++ )); do
+#for tbin in {6,13,19,24}; do
+ for (( tbin=6; tbin<=30; tbin++ )); do
 
 	out_end="${out_root}_ccfwmean_${tbin}bin"
 
@@ -113,11 +114,11 @@ for (( tbin=6; tbin<=30; tbin++ )); do
 #			clobber=yes \
 #			respfile="$rsp_matrix" \
 #			backfile="$bkgd_spec" > $dump_file
-#
 #	else
 #		echo -e "\tERROR: ASCII2PHA was not run. Spectrum, response matrix, "\
 #            "and/or background spectrum do not exist."
 #	fi
+
 	if [ ! -e "${out_end}.pha" ]; then
 		echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
 		echo -e "\tExiting script."
@@ -127,7 +128,7 @@ for (( tbin=6; tbin<=30; tbin++ )); do
 	## Writing file names to xspec script
 	echo "data $i:$i $out_end.pha" >> $xspec_script
 	
-	## nH Gamma FracSctr UpScOnly Tin norm(BB) lineE Sigma norm(E)
+	## for phabs*(simpl*diskbb+gauss)
 # 	mod_vals+="& & & 0.2 & & & & & & "  ## FracSctr
 # 	mod_vals+="& & 3.0 & 0.2 & & & & & & " ## Gamma and FracSctr
 #	mod_vals+="& & & 0.2 & & 0.8 & & & & " ## FracSctr and Tin
@@ -135,19 +136,52 @@ for (( tbin=6; tbin<=30; tbin++ )); do
 # 	mod_vals+="& & & 0.2 & & & & 6.33 .02 6.1 6.1 6.9 6.9 & & " ## FracSctr and lineE
 # 	mod_vals+="& & & 0.2 & & & & & 0.8 & " ## FracSctr and Sigma
 # 	mod_vals+="& & & 0.2 & & & & & & 0.01"  ## FracSctr and norm(E)
-	mod_vals+="& & 3.0 & 0.2 & & 0.8 & & & & "  ## Gamma, FracSctr, and Tin
-#	mod_vals+="& & 3.0 & 0.2 & & & 3000 & & & "  ## Gamma, FracSctr, and norm(BB)
+# 	mod_vals+="& & 3.0 & 0.2 & & 0.8 & & & & "  ## Gamma, FracSctr, and Tin
+# 	xspec_log="${prefix}_${day}_xspecfit_G-FS-T.log"
+# 	mod_vals+="& & 3.0 & 0.2 & & & 3000 & & & "  ## Gamma, FracSctr, and norm(BB)
 #	mod_vals+="& & 3.0 & 0.2 & & 0.8 & 3000 & & & "  ## Gamma, FracSctr, Tin, and norm(BB)
 
-    xspec_log="${prefix}_${day}_xspecfit_G-FS-T.log"
+## For phabs*(simpl*const*diskbb+diskbb+bbodyrad+gauss)
+#	mod_vals+=" &  & &  &  & &   &  &  &  &  & & & & "
+#	mod_vals+=" &  & 2.8 &  &  & .2 &   &  &  &  &  & & & & "
+#	mod_vals+=" &  & 2.8 &  &  & .2 &  &  &  &  & .6 & & & & "
+#	mod_vals+=" &  & 2.8 &  &  &    &   & &  &  &  & & & & "
+#	mod_vals+=" &  & &  &  & &   &  & .8 &  &  & & & & "
+#	mod_vals+=" &  & &  &  & &   &  &  & 3000 &  & & & & "
+#	mod_vals+=" &  & &  &  & &   &  &  &  & .8 & & & & "
+#	mod_vals+=" &  & &  &  & &   &  &  &  &  & 3000 & & & "
 
+
+## For phabs*(simpl*bbodyrad+bbodyrad+gauss)
+#	mod_vals+=" &  &  &     &  & &  &  &  &  & &  "
+#	mod_vals+=" &  &  & 0.2 &  & &  &  &  &  & &   "
+#	mod_vals+=" &  & 2.8 0.01 2.5 2.5 3.2 3.2 & &  & &  &  &  &  & &  "
+#	mod_vals+=" &  & 2.8 0.01 2.6 2.6 3.1 3.1 & 0.2 &  & & &  &  &  & &  "
+#	mod_vals+=" &  & 2.8 0.01 2.5 2.5 3.2 3.2 &  &  & &  & .6 .002 0.1 0.1 0.9 0.9 &  &  & &  "
+#	mod_vals+=" &  & 2.8 0.01 2.5 2.5 3.2 3.2 &  &  & &  &  & 2500 &  & &  "
+#	mod_vals+=" &  & 2.8 0.01 2.6 2.6 3.1 3.1 & 0.2 &  & & & .6 .002 0.1 0.1 0.9 0.9 &  &  & &  "
+
+## For phabs*(nthcomp+bbodyrad+bbodyrad+gauss)
+#	mod_vals+=" &  &     &  &  & &  & &  &  &  & & & & "
+#	mod_vals+=" &  & 2.8 0.01 2.6 2.6 3.1 3.1 &  &  & &  & &  &  &  & & & & "
+#	mod_vals+=" &  &     &  &  & &  & .2 &  &  &  & & & & "
+#    mod_vals+=" &  & 2.8 0.01 2.6 2.6 3.1 3.1 &  &  & &  & .2 &  &  &  & & & & "
+#	mod_vals+=" &  &  2.8 0.01 2.0 2.0 3.1 3.1  &  &  & &  & .2 &  &  & .6 .005 0.1 0.1 2.0 2.0 & & & & "
+#	mod_vals+=" &  &  2.8 0.01 2.6 2.6 3.1 3.1  &  &  & &  & &  &  & .6 .005 0.1 0.1 2.0 2.0 & & & & "
+#	mod_vals+=" &  &     &  &  & &  & .2 & .6 .005 0.1 0.1 2.0 2.0 &  &  & & & & "
+#	mod_vals+=" &  &     &  &  & &  & .2 &    & 3000 &  & & & & "
+
+	xspec_log="${prefix}_${day}_xspecfit_NTH-2BB-regerr.log"
+	
 	((i+=1))
 done
 ((i-=1))
 
+numpar=14
 ################################################################################
 
 if [ -e "$xspec_log" ]; then rm "$xspec_log"; fi; touch "$xspec_log"
+if [ -e "MCMC_NTH-2BB.fits" ]; then rm "MCMC_NTH-2BB.fits"; fi;
 
 ########################################
 ## Writing the rest of the xspec script
@@ -156,44 +190,136 @@ if [ -e "$xspec_log" ]; then rm "$xspec_log"; fi; touch "$xspec_log"
 echo "ignore 1-$i: **-3.0 20.0-**" >> $xspec_script
 echo "notice 1-$i: 3.0-20.0" >> $xspec_script
 echo "ignore 1-$i: 11" >> $xspec_script
-# echo "cpd /xw" >> $xspec_script
 echo "setplot energy" >> $xspec_script
 echo "systematic 0.005" >> $xspec_script
 echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
-echo "mod phabs*(simpl*diskbb+gauss) $mod_vals" >> $xspec_script
-echo "newpar 1 0.6" >> $xspec_script  ## This value is from Reynolds and Miller 2013
-echo "newpar 2 3.0" >> $xspec_script
-echo "newpar 3 0.2" >> $xspec_script
-echo "newpar 4 1.0" >> $xspec_script  ## Upscattering only
-echo "newpar 5 .8" >> $xspec_script
-echo "newpar 6 3340.2592" >> $xspec_script
-echo "freeze 6" >> $xspec_script
-echo "newpar 7 6.33 0.02 6.1 6.1 6.9 6.9" >> $xspec_script
-# echo "newpar 7 6.32550" >> $xspec_script
-echo "newpar 8 0.791920" >> $xspec_script
-echo "newpar 9 1.68325E-02" >> $xspec_script
-echo "freeze 1 4" >> $xspec_script
-echo "log $xspec_log" >> $xspec_script
-echo "chatter 4" >> $xspec_script
-# echo "freeze 7 8 9" >> $xspec_script
-echo "fit 1000" >> $xspec_script
-# echo "plo ratio" >> $xspec_script
-# echo "iplo ratio" >> $xspec_script
-# echo "hardcopy ratio.eps/cps" >> $xspec_script
-# echo "quit" >> $xspec_script
-# echo "show par" >> $xspec_script
-# open "$xspec_script"
-# open -a "TextWrangler" mylog.log
-cd "$out_dir"
-xspec < "$xspec_script" > $dump_file
-# open ratio.eps
 
-echo "Finished running engy_spec_fitting.sh"
+
+#echo "mod phabs*(simpl*diskbb+bbodyrad+gauss) $mod_vals" >> $xspec_script
+#echo "newpar 1 0.6" >> $xspec_script
+#echo "freeze 1" >> $xspec_script
+#echo "newpar 2 2.8 0.01 2.6 2.6 3.1 3.1" >> $xspec_script
+#echo "newpar 3 0.2" >> $xspec_script
+#echo "newpar 4 1" >> $xspec_script
+#echo "freeze 4" >> $xspec_script
+#echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
+##echo "newpar 5 0.744958" >> $xspec_script
+##echo "newpar 5 0.80" >> $xspec_script
+##echo "freeze 5" >> $xspec_script
+##echo "newpar 6 3214.06" >> $xspec_script
+#echo "newpar 6 3300" >> $xspec_script
+##echo "freeze 6" >> $xspec_script
+#echo "newpar 7 0.6 0.002 0.1 0.1 0.9 0.9" >> $xspec_script
+#echo "newpar 8 2500" >> $xspec_script
+#echo "newpar 9 6.33 0.005 6.1 6.1 6.9 6.9" >> $xspec_script
+#echo "newpar 10 0.8 .005 0.65 0.65 0.9 0.9" >> $xspec_script
+#echo "newpar 11 1.0E-02" >> $xspec_script
+
+
+echo "mod phabs*(nthcomp+bbodyrad+bbodyrad+gauss) $mod_vals" >> $xspec_script
+echo "newpar 1 0.6" >> $xspec_script  ## This value is from Reynolds and Miller 2013
+echo "freeze 1" >> $xspec_script
+echo "newpar 2 2.8 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+echo "newpar 3 80.0 50.0 50.0 200.0 200.0" >> $xspec_script
+echo "thaw 3" >> $xspec_script
+echo "newpar 4 0.8" >> $xspec_script
+echo "thaw 4" >> $xspec_script
+echo "newpar 5 0" >> $xspec_script
+echo "freeze 5" >> $xspec_script
+echo "newpar 6 0.0" >> $xspec_script
+echo "freeze 6" >> $xspec_script
+echo "newpar 7 0.5" >> $xspec_script
+echo "newpar 8 .8 .005 0.5 0.5 1.0 1.0" >> $xspec_script
+echo "newpar 9 3300 " >> $xspec_script
+#echo "freeze 9" >> $xspec_script
+echo "newpar 10 .6 .005 0.1 0.1 2.0 2.0" >> $xspec_script
+echo "newpar 11 1.14574E+04" >> $xspec_script
+echo "freeze 11" >> $xspec_script
+#echo "newpar 11 3340.2592 " >> $xspec_script
+echo "newpar 12 6.33 0.02 6.1 6.1 6.9 6.9" >> $xspec_script
+echo "newpar 13 0.8 .005 0.65 0.65 1.0 1.0" >> $xspec_script
+echo "newpar 14 1.0E-02" >> $xspec_script
+## Tieing disk-component blackbodies together
+for (( x=1; x<=i*numpar; x++ )); do
+    n=$((x%numpar))
+    y=$((x+4))
+    if (( n == 4 )) && (( n != 0 )); then
+        echo "newpar $x = $y" >> $xspec_script
+    fi
+done
+
+#echo "mod phabs*(simpl*const*bbodyrad+bbodyrad+bbodyrad+gauss) $mod_vals" >> $xspec_script
+# echo "mod phabs*(simpl*diskbb+gauss) $mod_vals" >> $xspec_script
+
+#echo "newpar 1 0.6" >> $xspec_script  ## This value is from Reynolds and Miller 2013
+#echo "freeze 1" >> $xspec_script
+#echo "newpar 2 2.8" >> $xspec_script
+##echo "newpar 3 80.0 50.0 50.0 130.0 130.0" >> $xspec_script
+##echo "thaw 3" >> $xspec_script
+##echo "newpar 3 100.0" >> $xspec_script
+##echo "freeze 3" >> $xspec_script
+#echo "newpar 3 1" >> $xspec_script
+#echo "freeze 3" >> $xspec_script
+##echo "newpar 4 0.8" >> $xspec_script
+##echo "thaw 4" >> $xspec_script
+#echo "newpar 4 1" >> $xspec_script
+#echo "freeze 4" >> $xspec_script
+##echo "newpar 5 0" >> $xspec_script
+#echo "newpar 5 0.2" >> $xspec_script
+##echo "newpar 6 0.0" >> $xspec_script
+#echo "newpar 6 0.8 0.005 0.5 0.5 1.0 1.0" < $xspec_script
+##echo "newpar 7 1.0" >> $xspec_script
+#echo "newpar 7 3300 " >> $xspec_script
+#echo "freeze 7" >> $xspec_script
+##echo "newpar 8 0.776372" >> $xspec_script
+##echo "freeze 8" >> $xspec_script
+#echo "newpar 8 .8 .005 0.5 0.5 1.0 1.0" >> $xspec_script
+#echo "newpar 9 3300 " >> $xspec_script
+#echo "freeze 9" >> $xspec_script
+#echo "newpar 10 .6 .005 0.1 0.1 2.0 2.0" >> $xspec_script
+#echo "newpar 11 2500" >> $xspec_script
+#echo "freeze 11" >> $xspec_script
+##echo "newpar 11 3340.2592 " >> $xspec_script
+#echo "newpar 12 6.33 0.02 6.1 6.1 6.9 6.9" >> $xspec_script
+#echo "newpar 13 0.791920" >> $xspec_script
+#echo "newpar 14 1.68325E-02" >> $xspec_script
+
+## Tieing disk-component blackbodies together
+#for (( x=1; x<=i*numpar; x++ )); do
+#    n=$((x%numpar))
+#    y=$((x-2))
+#    if (( n == 8 )) && (( n != 0 )); then
+#        echo "newpar $x = $y" >> $xspec_script
+#    elif (( n == 9 )) && (( n != 0 )); then
+#        echo "newpar $x = $y" >> $xspec_script
+#    fi
+#done
+
+echo "log $xspec_log" >> $xspec_script
+#echo "chatter 4" >> $xspec_script
+echo "fit 1000" >> $xspec_script
+#echo "chain type gw " >> $xspec_script
+#echo "chain burn 2000" >> $xspec_script
+#echo "chain walkers 1000" >> $xspec_script
+#echo "chain length 100000" >> $xspec_script
+#echo "chain run MCMC_NTH-2BB.fits">> $xspec_script
+#echo "error maximum 10000. 2.706 1-350" >> $xspec_script
+echo "cpd /xw" >> $xspec_script
+echo "iplo ratio" >> $xspec_script
+echo "hardcopy ratio.eps/cps" >> $xspec_script
+echo "quit" >> $xspec_script
+# echo "show par" >> $xspec_scriptyy
+cd "$out_dir"
+xspec - "$xspec_script"
+# > $dump_file
+#open ratio.eps
+#open "$xspec_log"
+echo "Finished running sed_fitting.sh"
 cd ..
 pwd
-echo "$xspec_log"
+#echo "$xspec_log"
 
-python multifit_plots.py "$out_dir/$xspec_log"
+#python multifit_plots.py "$out_dir/$xspec_log"
 
 ################################################################################

@@ -5,6 +5,8 @@ spectra from it (per specified phase bin). Look at the 1-D or 2-D CCF to see
 which phase bins might be interesting to look at. Now also able to fit multiple
 energy spectra simultaneously!
 
+The code in this repository is licensed under the MIT license. See LICENSE.md for details.
+
 ## Contents
 
 ### energyspec.py
@@ -41,11 +43,10 @@ runs the xspec script, outputs to a log file.
 Reads the xspec log file to plot how the free parameters change with QPO phase.
 Fits the changing parameters with a sine wave to get the phase of each.
 
-##### Disclaimer: This code comes with no legal guarantees.
-
 
 ## Old
 #### ratio_spectrum.py
 #### mean_spectrum.py
 #### mean_spectrum.sh
 
+ [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/) 

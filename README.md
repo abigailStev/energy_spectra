@@ -5,7 +5,8 @@ spectra from it (per specified phase bin). Look at the 1-D or 2-D CCF to see
 which phase bins might be interesting to look at. Now also able to fit multiple
 energy spectra simultaneously!
 
-The code in this repository is licensed under the MIT license. See LICENSE.md for details.
+## Authors
+Abigail Stevens (UvA)
 
 ## Contents
 
@@ -48,5 +49,14 @@ Fits the changing parameters with a sine wave to get the phase of each.
 #### ratio_spectrum.py
 #### mean_spectrum.py
 #### mean_spectrum.sh
+
+## Copyright
+ 
+All content © 2015 the authors. The code is distributed under the MIT license. 
+See LICENSE.md for details.
+
+Pull requests are welcome! If you are interested in the further development of 
+energy_spectra, please [get in touch via the issues](https://github.com/dhuppenkothen/stingray/issues)!
+
 
  [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/) 

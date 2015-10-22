@@ -9,15 +9,15 @@ import matplotlib.ticker as ticker
 import argparse
 import subprocess
 from scipy.optimize import leastsq
-from scipy.signal import sawtooth
 import os.path
 
 __author__ = "Abigail Stevens <A.L.Stevens at uva.nl>"
 __year__ = "2015"
 
 """
-Reads an XSPEC log file and makes plots of varying fit parameters as a function
-of QPO or pulse phase.
+Reads an XSPEC log file and makes plots of varying SED parameters as a function
+of QPO or pulse phase. Fits the changing SED parameters with a function and gets
+the 'phase' of each parameter variation.
 
 """
 

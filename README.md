@@ -41,7 +41,7 @@ runs the xspec script, outputs to a log file.
 
 ### multifit_plots.py
 Reads the xspec log file to plot how the untied SED parameters change with QPO 
-phase. Fits the changing parameters with a function and gets the 'phase' of 
+phase. Fits the changing SED parameters with a function and gets the 'phase' of 
 each parameter variation.
 
 

@@ -6,31 +6,31 @@ multiple SEDs simultaneously with XSPEC, and fits a function to those SED
 parameter variations.
 
 ## Authors
-Abigail Stevens (UvA)
+* Abigail Stevens (UvA)
 
 ## Contents
 
 ### energyspec.py
 Takes CCF amplitudes of a specific time bin and writes them to a file. Can make
-only a mean SED (of just the mean count rate per channel of interest), mean \+ 
+only a mean SED (of just the mean count rate per channel of interest), mean + 
 ccf for a phase-resolved SED, or only the ccf for a deviation of each phase-
 resolved SEDs from the mean SED. Units should be photon count rate.
 
-#### run_energyspec.sh
+### run_energyspec.sh
 Bash script to run energyspec.py and make and run XSPEC scripts to make plots of
 the SEDs.
 
-#### spectra/ccfonly.pco
+### out_es/ccfonly.pco
 A QDP style file for plotting the ccf deviations with stepped lines.
 
-#### spectra/ccfonly_points.pco
+### out_es/ccfonly_points.pco
 A QDP style file for plotting the ccf deviations with unconnected points.
 
-### spectra/ccfwmean.pco
+### out_es/ccfwmean.pco
 A QDP style file for plotting the mean+ccf (i.e. phase-resolved SED) with 
 stepped lines.
 
-### spectra/ccfwmean_points.pco
+### out_es/ccfwmean_points.pco
 A QDP style file for plotting the mean+ccf (i.e. phase-resolved SED) with 
 unconnected points.
 

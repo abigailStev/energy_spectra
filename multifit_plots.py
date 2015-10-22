@@ -52,6 +52,7 @@ class Parameter(object):
     def __str__(self):
         return "%s" % (self.label)
 
+
 class Phabs(object):
     def __init__(self):
         self.mod_name = "phabs"
@@ -59,6 +60,7 @@ class Phabs(object):
 
     def __str__(self):
         return "%s" % (self.mod_name)
+
 
 class Simpl(object):
     def __init__(self):
@@ -70,6 +72,7 @@ class Simpl(object):
     def __str__(self):
         return "%s" % (self.mod_name)
 
+
 class Simpler(object):
     def __init__(self):
         self.mod_name = "simpler"
@@ -79,6 +82,7 @@ class Simpler(object):
 
     def __str__(self):
         return "%s" % (self.mod_name)
+
 
 class Nthcomp(object):
     def __init__(self):
@@ -93,6 +97,7 @@ class Nthcomp(object):
     def __str__(self):
         return "%s" % (self.mod_name)
 
+
 class Diskbb(object):
     def __init__(self):
         self.mod_name = "diskbb"
@@ -101,6 +106,7 @@ class Diskbb(object):
 
     def __str__(self):
         return "%s" % (self.mod_name)
+
 
 class Diskpbb(object):
     def __init__(self):
@@ -112,6 +118,7 @@ class Diskpbb(object):
     def __str__(self):
         return "%s" % (self.mod_name)
 
+
 class Bbodyrad(object):
     def __init__(self):
         self.mod_name = "bbodyrad"
@@ -120,6 +127,7 @@ class Bbodyrad(object):
 
     def __str__(self):
         return "%s" % (self.mod_name)
+
 
 class Gaussian(object):
     def __init__(self):
@@ -131,6 +139,7 @@ class Gaussian(object):
     def __str__(self):
         return "%s" % (self.mod_name)
 
+
 class Diskline(object):
     def __init__(self, mod_name):
         self.mod_name = mod_name
@@ -139,6 +148,7 @@ class Diskline(object):
 
     def __str__(self):
         return "%s" % (self.mod_name)
+
 
 class Cutoffpl(object):
     def __init__(self, mod_name):
@@ -149,10 +159,11 @@ class Cutoffpl(object):
     def __str__(self):
         return "%s" % (self.mod_name)
 
+
 ################################################################################
 def get_logfile_errors(log_file, num_spectra, mod_components):
     """
-    Reads (fake-ish) errors on the varying parameters from the xspec log file.
+    Reads (fake) errors on the varying parameters from the XSPEC log file.
     Only uses the first value and repeats along an array, since just need this
     for approximating when making first plots with a new fit.
 
@@ -174,7 +185,6 @@ def get_logfile_errors(log_file, num_spectra, mod_components):
     -------
     mod_components
         List of model parameters used, with the errors assigned.
-
     """
 
     with open(log_file, 'r') as f:
@@ -197,20 +207,33 @@ def get_logfile_errors(log_file, num_spectra, mod_components):
 ################################################################################
 def read_chain(error_file_o):
     """
-    Gets the error on the varying parameters from an MCMC error estimation.
+    Reads in the MCMC chain from XSPEC's built-in MCMC error estimation.
 
     Paramters
     ---------
-    error_file_o : string
+    error_file_o : str
         The open file object of the log file with chain errors at the end.
 
     Returns
     -------
-    par_nums
-    lo_v
-    hi_v
-    neg_err
-    pos_err
+    par_nums : np.array of ints
+        1-D array of the XSPEC parameter number of each varying parameter.
+
+    lo_v : np.array of floats
+        1-D array of the parameter value representing the lower bound of the
+        error bar.
+
+    hi_v : np.array of floats
+        1-D array of the parameter value representing the upper bound of the
+        error bar.
+
+    neg_err : np.array of floats
+        1-D array of the negative error bars as deviations from the parameter
+        values.
+
+    pos_err : np.array of floats
+        1-D array of the positive error bars as deviations from the parameter
+        values.
     """
     par_nums = np.array([])
     lo_v = np.array([])
@@ -236,28 +259,44 @@ def read_chain(error_file_o):
 ################################################################################
 def get_chain_errors(mod_components, par_nums, lo_v, hi_v, neg_err, pos_err):
     """
-    Gets the error on the varying parameters from an MCMC error estimation.
+    Gets the error on the varying SED parameters from the MCMC chain.
 
     Paramters
     ---------
-    var_pars
+    mod_components : list of Parameter objects
+        The components of the SED model.
 
-    par_nums
+    par_nums : np.array of int
+        1-D array of the XSPEC parameter number of each varying parameter.
 
-    lo_v
+    lo_v : np.array of floats
+        1-D array of the parameter value representing the lower bound of the
+        error bar.
 
-    hi_v
+    hi_v : np.array of floats
+        1-D array of the parameter value representing the upper bound of the
+        error bar.
 
-    neg_err
+    neg_err : np.array of floats
+        1-D array of the negative error bars as deviations from the parameter
+        values.
 
-    pos_err
+    pos_err : np.array of floats
+        1-D array of the positive error bars as deviations from the parameter
+        values.
 
     Returns
     -------
-    var_pars
-
-
+    var_pars : list of Parameter objects
+        A 1-D list of the untied SED parameters that vary with QPO phase.
     """
+
+    print type(par_nums)
+    print type(mod_components)
+    print type(lo_v)
+    print type(hi_v)
+    print type(neg_err)
+    print type(pos_err)
 
     for component in mod_components:
         temp_mask = np.array([], dtype=bool)
@@ -282,9 +321,9 @@ def read_log_file(log_file):
     Reads the XSPEC log file and assigns parameters to Parameter objects, with
     the expectation that chatter is set to 4.
 
-    Params
-    ------
-    log_file : string
+    Parameters
+    ----------
+    log_file : str
         Full path of the XSPEC log file, with chatter set to 4. Assuming the
         spectral models listed below are the only ones used (or the only
         interesting ones).
@@ -292,11 +331,10 @@ def read_log_file(log_file):
     Returns
     -------
     var_pars : list of Parameter objects
-        A list of the parameters that vary with QPO phase.
+        A 1-D list of the untied SED parameters that vary with QPO phase.
 
     int
         Number of spectra being simultaneously fit for one QPO phase.
-
     """
 
     if not os.path.isfile(log_file) or os.path.getsize(log_file) == 0:
@@ -391,251 +429,20 @@ def read_log_file(log_file):
 
 
 ################################################################################
-def make_plots_var3(plot_name, num_spectra, param1, param2, param3):
-    """
-    Making plots of fit parameters vs phase for three co-varying parameters.
-
-    """
-
-    font_prop = font_manager.FontProperties(size=18)
-    xLocator = MultipleLocator(0.05)  ## loc of minor ticks on y-axis
-
-    phase = np.arange(num_spectra) / 23.646776
-    tinybins = np.arange(-0.02, 1.02, 0.01)
-
-    ## So that the plotted x-value is the MIDDLE of the 'bin', with and error of
-    ## the width of the bin.
-    plusphase = (phase[1]-phase[0])/2.0
-    phase_err = np.repeat(plusphase, num_spectra)
-    phase += plusphase
-    tinybins += plusphase
-
-    param1_max = -1
-    param2_max = -1
-    param3_max = -1
-    if param1.funcfit is not None:
-        param1_max = tinybins[np.argmax(param1.funcfit)]
-    if param2.funcfit is not None:
-        param2_max = tinybins[np.argmax(param2.funcfit)]
-    if param3.funcfit is not None:
-        param3_max = tinybins[np.argmax(param3.funcfit)]
-
-    print("Plot file: %s" % plot_name)
-
-    fig = plt.figure(figsize=(10, 12), tight_layout=True, dpi=300)
-
-    ########################
-    ## Plotting parameter 1
-    ########################
-
-    ymax1 = np.max(param1.value+param1.pos_err)*1.1
-    ymin1 = np.min(param1.value-param1.pos_err)*0.9
-
-    ax1 = fig.add_subplot(311)
-    ax1.errorbar(phase, param1.value, xerr=phase_err, yerr=[param1.neg_err, param1.pos_err],
-            lw=2, color='red', drawstyle='steps-mid', marker='.', ms=10,
-            mec='red', mfc='red', ecolor='red', elinewidth=2, capsize=0)
-    if param1.funcfit is not None:
-        # rect1 = patches.Rectangle((param1_max-param1.phase_err, ymin1),
-        #         2*param1.phase_err, ymax1-ymin1, color='pink', ec="none",
-        #         alpha=0.3)
-        # ax1.add_patch(rect1)
-        ax1.plot(tinybins, param1.funcfit, c='black', lw=2)
-        ax1.vlines(param1_max, ymin1, ymax1, lw=2, color='gray',
-                linestyles='dashed')
-
-    ax1.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
-                    labelbottom=False, labeltop=False)
-    ax1.tick_params(axis='y', labelsize=18, left=True, right=True, \
-                    labelleft=True, labelright=False)
-    ax1.set_ylabel(param1.label, fontproperties=font_prop)
-
-    ax1.set_ylim(ymin1, ymax1)
-    ax1.set_xlim(0.0, 1.01)
-    y_maj_loc = ax1.get_yticks()
-    # ax1.set_yticks(y_maj_loc[1:])
-    yLocator1 = MultipleLocator(.01)  ## loc of minor ticks on y-axis
-    ax1.yaxis.set_minor_locator(yLocator1)
-    ax1.xaxis.set_minor_locator(xLocator)
-
-    ########################
-    ## Plotting parameter 2
-    ########################
-
-    ymax2 = np.max(param2.value+param2.pos_err)*1.1
-    ymin2 = np.min(param2.value-param2.pos_err)*0.9
-
-    ax2 = fig.add_subplot(312, sharex=ax1)
-    ax2.errorbar(phase, param2.value, xerr=phase_err, yerr=[param2.neg_err, param2.pos_err],
-            lw=2, color='green', drawstyle='steps-mid', marker='.', ms=10,
-            mec='green', mfc='green', ecolor='green', elinewidth=2, capsize=0)
-    if param2.funcfit is not None:
-        # rect2 = patches.Rectangle((param2_max-param2.phase_err, ymin2),
-        #         2*param2.phase_err, ymax2-ymin2, color='pink', ec="none",
-        #         alpha=0.3)
-        # ax2.add_patch(rect2)
-        ax2.plot(tinybins, param2.funcfit, c='black', lw=2)
-        ax2.vlines(param2_max, ymin2, ymax2, lw=2, color='gray',
-                linestyles='dashed')
-
-    ax2.tick_params(axis='x', labelsize=18, bottom=True, top=True,
-                    labelbottom=False, labeltop=False)
-    ax2.tick_params(axis='y', labelsize=18, left=True, right=True,
-                    labelleft=True, labelright=False)
-    ax2.set_ylabel(param2.label, fontproperties=font_prop)
-
-    ax2.set_ylim(ymin2, ymax2)
-    ax2.set_xlim(0.0, 1.01)
-    y_maj_loc = ax2.get_yticks()
-    # ax2.set_yticks(y_maj_loc[1:-1])
-    y_min_mult = 0.5 * (y_maj_loc[1] - y_maj_loc[0])
-    yLocator2 = MultipleLocator(y_min_mult)  ## loc of minor ticks on y-axis
-    ax2.yaxis.set_minor_locator(yLocator2)
-    ax2.set_xticks(np.arange(0, 1.05, 0.25))
-    ax2.xaxis.set_minor_locator(xLocator)
-
-    ########################
-    ## Plotting parameter 3
-    ########################
-
-    ymax3 = np.max(param3.value+param3.pos_err)*1.1
-    ymin3 = np.min(param3.value-param3.neg_err)*0.9
-
-    ax3 = fig.add_subplot(313, sharex=ax1)
-    ax3.errorbar(phase, param3.value, xerr=phase_err, yerr=[param3.neg_err, param3.pos_err],
-                 lw=2, color='blue', drawstyle='steps-mid', marker='.', ms=10,
-                 mec='blue', mfc='blue', ecolor='blue', elinewidth=2, capsize=0)
-    if param3.funcfit is not None:
-        # rect3 = patches.Rectangle((param3_max-param3.phase_err, ymin3),
-        #         2*param3.phase_err, ymax3-ymin3, color='pink', ec="none",
-        #         alpha=0.3)
-        # ax3.add_patch(rect3)
-        ax3.plot(tinybins, param3.funcfit, c='black', lw=2)
-        ax3.vlines(param3_max, ymin3, ymax3, lw=4, color='gray',
-                linestyles='dashed')
-
-    ax3.tick_params(axis='x', labelsize=18, bottom=True, top=True,
-                    labelbottom=True, labeltop=False)
-    ax3.tick_params(axis='y', labelsize=18, left=True, right=True,
-                    labelleft=True, labelright=False)
-    ax3.set_ylabel(param3.label, fontproperties=font_prop)
-    ax3.set_xlabel('Normalized QPO phase', fontproperties=font_prop)
-
-    ax3.set_ylim(ymin3, ymax3)
-    ax3.set_xlim(0.0, 1.01)
-    y_maj_loc = ax3.get_yticks()
-    # ax3.set_yticks(y_maj_loc[0:-1])
-    # y_maj_loc = [0.460, 0.464, 0.468, 0.472]
-    # ax3.set_yticks(y_maj_loc)
-    y_min_mult = 0.25 * (y_maj_loc[1] - y_maj_loc[0])
-    yLocator3 = MultipleLocator(y_min_mult)  ## loc of minor ticks on y-axis
-    ax3.yaxis.set_minor_locator(yLocator3)
-    ax3.set_xticks(np.arange(0, 1.05, 0.25))
-    ax3.xaxis.set_minor_locator(xLocator)
-
-    fig.subplots_adjust(hspace=0.00)
-    # 	plt.show()
-    plt.savefig(plot_name)
-    plt.close()
-    subprocess.call(['open', plot_name])
-    subprocess.call(['cp', plot_name, "/Users/abigailstevens/Dropbox/Research/CCF_paper1/"])
-
-
-################################################################################
-def make_plots_var2(plot_name, num_spectra, param1, param2):
-    """
-    Making plots of fit parameters vs phase for two co-varying parameters,
-    fracsctr and another.
-
-    """
-
-    font_prop = font_manager.FontProperties(size=18)
-    xLocator = MultipleLocator(0.05)  ## loc of minor ticks on y-axis
-
-    phase = np.arange(num_spectra) / 23.646776
-    tinybins = np.arange(-0.01, 1.03, 0.01)
-    param1_max = -1
-    param2_max = -1
-
-    if param1.funcfit is not None:
-        param1_max = tinybins[np.argmax(param1.funcfit)]
-    if param2.funcfit is not None:
-        param2_max = tinybins[np.argmax(param2.funcfit)]
-
-    print "Plot file: %s" % plot_name
-
-    fig = plt.figure(figsize=(12, 10))
-
-    #####################
-    ## Plotting FracSctr
-    #####################
-
-    ax1 = fig.add_subplot(211)
-    ax1.errorbar(phase, param1.value, yerr=[param1.neg_err, param1.pos_err], \
-            lw=0, ecolor='green', marker='.', ms=10, mec='green', mfc='green', \
-            elinewidth=2, capsize=2)
-    if param1.funcfit is not None:
-        ax1.plot(tinybins, param1.funcfit, c='black', lw=2)
-        ax1.vlines(param1_max, 0.1, 0.35, lw=1, linestyles='dashed')
-    #   ax1.vlines(param1_max - 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
-    #   ax1.vlines(param1_max + 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
-
-    ax1.set_ylim(0.1, 0.35)
-    ax1.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
-                    labelbottom=False, labeltop=False)
-    ax1.tick_params(axis='y', labelsize=18, left=True, right=True, \
-                    labelleft=True, labelright=False)
-    ax1.set_ylabel(param1.label, fontproperties=font_prop)
-
-    y_maj_loc = ax1.get_yticks()
-    ax1.set_yticks(y_maj_loc[1:])
-    # yLocator1 = MultipleLocator(.01)  ## loc of minor ticks on y-axis
-    # ax1.yaxis.set_minor_locator(yLocator1)
-    ax1.set_xticks(np.arange(0, 1.05, 0.25))
-    ax1.xaxis.set_minor_locator(xLocator)
-
-    #######################################################
-    ## Plotting other param (diskBB Tin, diskBB norm, ...)
-    #######################################################
-
-    ax2 = fig.add_subplot(212, sharex=ax1)
-    ax2.errorbar(phase, param2.value, yerr=[param2.neg_err, param2.pos_err], \
-            lw=0, ecolor='blue', marker='.', ms=10, mec='blue', mfc='blue', \
-            elinewidth=2, capsize=2)
-    # 	ax2.set_xlim(bins[0]-0.5,bins[-1]+0.5)
-    if param2.funcfit is not None:
-        ax2.plot(tinybins, param2.funcfit, c='black', lw=2)
-        # ax2.vlines(param2_max, 2.2, 2.8, lw=1, linestyles='dashed')
-    #   ax2.vlines(param1_max - 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
-    #   ax2.vlines(param1_max + 3.2181e-03, 0.12, 0.24, lw=1, linestyles='dotted')
-    # ax2.set_ylim(2.2, 2.8)
-    ax2.tick_params(axis='x', labelsize=18, bottom=True, top=True, \
-                    labelbottom=True, labeltop=False)
-    ax2.tick_params(axis='y', labelsize=18, left=True, right=True, \
-                    labelleft=True, labelright=False)
-    ax2.set_ylabel(param2.label, fontproperties=font_prop)
-
-    ax2.set_xlabel('Normalized QPO phase', fontproperties=font_prop)
-
-    y_maj_loc = ax2.get_yticks()
-    ax2.set_yticks(y_maj_loc[0:-1])
-    # yLocator2 = MultipleLocator(.001)  ## loc of minor ticks on y-axis
-    # ax2.yaxis.set_minor_locator(yLocator2)
-    ax2.set_xticks(np.arange(0, 1.05, 0.25))
-    ax2.xaxis.set_minor_locator(xLocator)
-
-    fig.subplots_adjust(hspace=0.00)
-    # 	plt.show()
-    plt.savefig(plot_name)
-    plt.close()
-    subprocess.call(['open', plot_name])
-
-
-################################################################################
 def make_var_plots(plot_file, num_spectra, var_pars):
     """
-    Making plots of fit parameters vs phase for mutiple co-varying parameters.
+    Making plots of SED parameters vs phase for multiple co-varying parameters.
 
+    Parameters
+    ----------
+    plot_file : str
+        The full path of the file name to save the plot to.
+
+    num_spectra : int
+        The number of SEDs that were co-fit.
+
+    var_pars : list of Parameter objects
+        A 1-D list of the SED parameters that vary with QPO phase.
     """
 
     font_prop = font_manager.FontProperties(size=18)
@@ -651,7 +458,7 @@ def make_var_plots(plot_file, num_spectra, var_pars):
     phase += plusphase
     tinybins += plusphase
 
-    colours=['red', 'green', 'blue', 'orange', 'gray']
+    colours = ['red', 'green', 'blue', 'orange', 'gray']
 
     # print("Plot file: %s" % plot_name)
 
@@ -732,19 +539,17 @@ def fit_function(t, p):
     Parameters
     ----------
     t : np.array of floats
-        Time steps for the fit function.
+        1-D array of time steps for the fit function.
     p : np.array of floats
-        The function parameters.
+        1-D array of the function parameters.
 
     Returns
     -------
     np.array of floats
-        A function fit to the data at steps t with parameters p.
+        1-D array of the function fit to the data at steps t with parameters p.
     """
-    return p[0] * np.sin(2.0 * np.pi * t + p[1]) + p[2] * \
-           sawtooth(2.0 * np.pi * t + p[3]) + p[4]
-           # scipy.signal.sawtooth(2.0 * np.pi * t + p[3]) + p[4]
-
+    return p[0] * np.sin(2. * np.pi * t + p[1]) + \
+           p[2] * np.sin(2. * 2. * np.pi * t + p[3]) + p[4]
 
 ################################################################################
 def function_residuals(p, data, data_err, t):
@@ -756,24 +561,27 @@ def function_residuals(p, data, data_err, t):
     real residual and covariance matrix (which will also make it look exactly
     like eqn 6.12))
 
-    Params
+    Parameters
     ------
     p : np.array of floats
-        The function parameters.
-    data : np.array of floats
-        The data we want to fit to; in this case, the list of fit parameters per
-        energy spectra over QPO phase.
-    data_err : np.array of floats
-        The error on the data.
-    t : np.array of floats
-        Time steps for the fitting function.
+        1-D array of the function parameters.
 
-    Return
-    ------
+    data : np.array of floats
+        1-D array of the data we want to fit to; in this case, the list of SED
+        fit parameters over QPO phase.
+
+    data_err : np.array of floats
+        1-D array of the error on the data.
+
+    t : np.array of floats
+        1-D array of the time steps for the fitting function.
+
+    Returns
+    -------
     np.array of floats
-        A modified weighted least squared residual of the current function fit
-        with the data. From S. Vaughan 2013 eqn 6.12 and scipy.optimize.leastsq
-        documentation.
+        1-D array of a modified weighted least squared residual of the current
+        function fit with the data. From S. Vaughan 2013 eqn 6.12 and
+        scipy.optimize.leastsq documentation.
     """
     residual = np.abs(data - fit_function(t, p)) / data_err
     return residual
@@ -785,23 +593,24 @@ def get_phase(parameter, num_spectra):
     Fitting a function to an energy spectrum fit parameter to determine the
     phase of the parameter changes.
 
-    Params
-    ------
+    Parameters
+    ----------
     parameter : Parameter object
         The spectral energy distribution parameter.
+
     num_spectra : int
         The number of energy spectra in use (the number of energy spectra per
         QPO phase).
 
-    Return
-    ------
+    Returns
+    -------
     Parameter object
         The energy spectrum parameter, with funcfit, phase, and phase_err
         assigned.
 
     """
     t = np.arange(num_spectra) / 23.646776
-    p = [1.0, 0.0, 1.0, 0.0, np.mean((np.min(parameter.value), \
+    p = [1., 0., 1., 0., np.mean((np.min(parameter.value), \
             np.max(parameter.value)))]  ## Amplitude, phase shift, mean
 
     parameter.error = np.mean((parameter.pos_err, parameter.neg_err), axis=0)
@@ -839,16 +648,26 @@ def get_phase(parameter, num_spectra):
 
 
 ################################################################################
-def main(log_file, write_func, mod_string):
+def main(log_file, mod_string="", write_func=""):
     """
-    Params
-    ------
-    log_file : string
-        The XSPEC log file, with chatter set to 4, with extension '.log'.
+    Reads the XSPEC log file to get the component values, fits a function to the
+    varying SED parameters, writes those fit function parameters to a file (if
+    specified), and plots the varying parameters with their best-fit function.
 
-    Returns
-    -------
-    nothing
+    Parameters
+    ------
+    log_file : str
+        The full path of the XSPEC log file, with chatter set to 4, with
+        extension '.log'.
+
+    mod_string : str
+        The energy spectral model, as a string with no spaces. Used when saving
+        information to a table.
+
+    write_func : str
+        The full path of the text file to write the best-fitting function
+        parameters from the SED parameter variations to.
+
     """
     ##########################################
     ## Reading in the log file to data arrays
@@ -923,6 +742,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.log_file, args.write_func, args.mod_string)
+    main(args.log_file, args.mod_string, args.write_func)
 
 ################################################################################

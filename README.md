@@ -16,14 +16,14 @@ only a mean SED (of just the mean count rate per channel of interest), mean \+
 ccf for a phase-resolved SED, or only the ccf for a deviation of each phase-
 resolved SEDs from the mean SED. Units should be photon count rate.
 
-### run_energyspec.sh
+#### run_energyspec.sh
 Bash script to run energyspec.py and make and run XSPEC scripts to make plots of
 the SEDs.
 
-### spectra/ccfonly.pco
+#### spectra/ccfonly.pco
 A QDP style file for plotting the ccf deviations with stepped lines.
 
-### spectra/ccfonly_points.pco
+#### spectra/ccfonly_points.pco
 A QDP style file for plotting the ccf deviations with unconnected points.
 
 ### spectra/ccfwmean.pco

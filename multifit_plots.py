@@ -291,12 +291,12 @@ def get_chain_errors(mod_components, par_nums, lo_v, hi_v, neg_err, pos_err):
         A 1-D list of the untied SED parameters that vary with QPO phase.
     """
 
-    print type(par_nums)
-    print type(mod_components)
-    print type(lo_v)
-    print type(hi_v)
-    print type(neg_err)
-    print type(pos_err)
+    # print type(par_nums)
+    # print type(mod_components)
+    # print type(lo_v)
+    # print type(hi_v)
+    # print type(neg_err)
+    # print type(pos_err)
 
     for component in mod_components:
         temp_mask = np.array([], dtype=bool)
@@ -316,7 +316,7 @@ def get_chain_errors(mod_components, par_nums, lo_v, hi_v, neg_err, pos_err):
 
 
 ################################################################################
-def read_log_file(log_file):
+def read_log_file(log_file, quiet):
     """
     Reads the XSPEC log file and assigns parameters to Parameter objects, with
     the expectation that chatter is set to 4.
@@ -327,6 +327,9 @@ def read_log_file(log_file):
         Full path of the XSPEC log file, with chatter set to 4. Assuming the
         spectral models listed below are the only ones used (or the only
         interesting ones).
+
+    quiet : bool
+        If True, suppresses printing to the screen.
 
     Returns
     -------
@@ -421,7 +424,9 @@ def read_log_file(log_file):
                 neg_err, pos_err)
 
     if not chains:
-        print("Using fake errors from log file. Need to run error analysis!!")
+        if not quiet:
+            print("Using fake errors from log file. Need to run error "\
+                    "analysis!!")
         mod_components = get_logfile_errors(log_file, num_spectra, \
                 mod_components)
 
@@ -429,7 +434,7 @@ def read_log_file(log_file):
 
 
 ################################################################################
-def make_var_plots(plot_file, num_spectra, var_pars):
+def make_var_plots(plot_file, num_spectra, var_pars, quiet):
     """
     Making plots of SED parameters vs phase for multiple co-varying parameters.
 
@@ -443,6 +448,9 @@ def make_var_plots(plot_file, num_spectra, var_pars):
 
     var_pars : list of Parameter objects
         A 1-D list of the SED parameters that vary with QPO phase.
+
+    quiet : bool
+        If True, will not open the plot made.
     """
 
     font_prop = font_manager.FontProperties(size=18)
@@ -527,8 +535,10 @@ def make_var_plots(plot_file, num_spectra, var_pars):
     # 	plt.show()
     plt.savefig(plot_file)
     plt.close()
-    subprocess.call(['open', plot_file])
-    # subprocess.call(['cp', plot_file, "/Users/abigailstevens/Dropbox/Research/CCF_paper1/"])
+
+    if not quiet:
+        subprocess.call(['open', plot_file])
+    #   subprocess.call(['cp', plot_file, "/Users/abigailstevens/Dropbox/Research/CCF_paper1/"])
 
 
 ################################################################################
@@ -588,7 +598,7 @@ def function_residuals(p, data, data_err, t):
 
 
 ################################################################################
-def get_phase(parameter, num_spectra):
+def get_phase(parameter, num_spectra, quiet):
     """
     Fitting a function to an energy spectrum fit parameter to determine the
     phase of the parameter changes.
@@ -601,6 +611,9 @@ def get_phase(parameter, num_spectra):
     num_spectra : int
         The number of energy spectra in use (the number of energy spectra per
         QPO phase).
+
+    quiet : bool
+        If True, suppresses printing to the screen.
 
     Returns
     -------
@@ -619,7 +632,9 @@ def get_phase(parameter, num_spectra):
             parameter.error, t), full_output=1)
     # print "P best:", p_best
     best_fit = p_best[0]
-    print("\tBest fit: %s" % str(best_fit))
+
+    if not quiet:
+        print("\tBest fit: %s" % str(best_fit))
 
     # plt.errorbar(t, parameter.value, xerr=None, yerr=parameter.error)
     # plt.plot(t, fit_function(t, best_fit))
@@ -648,7 +663,7 @@ def get_phase(parameter, num_spectra):
 
 
 ################################################################################
-def main(log_file, mod_string="", write_func=""):
+def main(log_file, mod_string="", write_func="", quiet=False):
     """
     Reads the XSPEC log file to get the component values, fits a function to the
     varying SED parameters, writes those fit function parameters to a file (if
@@ -668,12 +683,16 @@ def main(log_file, mod_string="", write_func=""):
         The full path of the text file to write the best-fitting function
         parameters from the SED parameter variations to.
 
+    quiet : bool
+        If True, suppresses printing to the screen and will not open the plot
+        made.
+
     """
     ##########################################
     ## Reading in the log file to data arrays
     ##########################################
 
-    mod_components, num_spectra = read_log_file(log_file)
+    mod_components, num_spectra = read_log_file(log_file, quiet)
 
     # print "Number of spectra:", num_spectra
 
@@ -684,16 +703,18 @@ def main(log_file, mod_string="", write_func=""):
     var_pars = []
 
     for component in mod_components:
-        print component.par_name, "mean:", np.mean(component.value)
+        if not quiet:
+            print component.par_name, "mean:", np.mean(component.value)
         if component.varying:
-            component = get_phase(component, num_spectra)
+            component = get_phase(component, num_spectra, quiet)
             var_pars.append(component)
         # print "%s %s phase: %.4f +- %.4f" % (parameter.mod_name, \
         #         parameter.par_name, parameter.phase, parameter.phase_err)
 
     if write_func != "":
-        print("Writing function parameters to: %s" % write_func)
-        with open(write_func, 'w') as out:
+        if not quiet:
+            print("Writing function parameters to: %s" % write_func)
+        with open(write_func, 'a') as out:
             out.write("%s    " % (mod_string))
             for component in mod_components:
                 if component.varying:
@@ -713,7 +734,7 @@ def main(log_file, mod_string="", write_func=""):
 
     if len(var_pars) >= 1:
         plot_name = log_file.replace('.log', '.eps')
-        make_var_plots(plot_name, num_spectra, var_pars)
+        make_var_plots(plot_name, num_spectra, var_pars, quiet)
     else:
         print("\tNo parameters are varying. Nothing to plot.")
 
@@ -740,8 +761,12 @@ if __name__ == '__main__':
             help="Specifies a text file to write the best-fitting function "\
             "parameters to. []")
 
+    parser.add_argument('-q', '--quiet', dest='quiet', action='store_true',
+            default=False, help="If present, quiets output and does not open "\
+            "the plot.")
+
     args = parser.parse_args()
 
-    main(args.log_file, args.mod_string, args.write_func)
+    main(args.log_file, args.mod_string, args.write_func, args.quiet)
 
 ################################################################################

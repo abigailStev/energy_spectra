@@ -77,7 +77,7 @@ if [ -e "$parfit_file" ]; then rm "$parfit_file"; fi; touch "$parfit_file"
 if [ ! -e "$tex_tab_file" ]; then touch "$tex_tab_file"; fi
 
 if [ -e "$data_dir/PCU2.rsp" ]; then
-    cp "$data_dir/PCU2.rsp" "$rsp_matrix"
+    cp "$data_dir/PCU2.rsp" "${out_dir}/$rsp_matrix"
 else
     echo "ERROR: Response matrix doesn't exist in the reduced data directory."
     exit

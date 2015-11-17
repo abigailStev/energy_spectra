@@ -1,5 +1,10 @@
-#!/usr/bin/env
+#!/usr/bin/env python
+"""
+Reads an XSPEC log file and makes plots of varying SED parameters as a function
+of QPO or pulse phase. Fits the changing SED parameters with a function and gets
+the 'phase' of each parameter variation.
 
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
@@ -10,154 +15,11 @@ import argparse
 import subprocess
 from scipy.optimize import leastsq
 import os.path
+from datetime import datetime
+import sed_pars
 
 __author__ = "Abigail Stevens <A.L.Stevens at uva.nl>"
 __year__ = "2015"
-
-"""
-Reads an XSPEC log file and makes plots of varying SED parameters as a function
-of QPO or pulse phase. Fits the changing SED parameters with a function and gets
-the 'phase' of each parameter variation.
-
-"""
-
-class Parameter(object):
-    def __init__(self, mod_name, label, par_name):
-        """
-        mod_name : str
-            The exact string of the model of this parameter to search for and
-            match for in an XSPEC log file.
-        label : str
-            What to label a graph (done up nice and pretty).
-        par_name : str
-            The exact string of this parameter to search for and match for in an
-            XSPEC log file.
-        """
-        self.mod_name = mod_name
-        self.label = label
-        self.par_name = par_name
-        self.value = np.array([])
-        self.error = 0
-        self.lo_v = 0
-        self.hi_v = 0
-        self.pos_err = 0
-        self.neg_err = 0
-        self.par_num = np.array([])
-        self.varying = False
-        self.funcfit = None
-        self.best_fit = None
-        self.phase = None
-        self.phase_err = None
-
-    def __str__(self):
-        return "%s" % (self.label)
-
-
-class Phabs(object):
-    def __init__(self):
-        self.mod_name = "phabs"
-        self.nH = Parameter(self.mod_name, r"phabs: nH ($\times 10^{22}$)", "nH")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Simpl(object):
-    def __init__(self):
-        self.mod_name = "simpl "
-        self.Gamma = Parameter(self.mod_name, "simpl: Gamma", "Gamma")
-        self.FracSctr = Parameter(self.mod_name, "simpl: FracSctr", "FracSctr")
-        self.UpScOnly = Parameter(self.mod_name, "simpl: UpScOnly", "UpScOnly")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Simpler(object):
-    def __init__(self):
-        self.mod_name = "simpler"
-        self.Gamma = Parameter(self.mod_name, "simpler: Gamma", "Gamma")
-        self.FracSctr = Parameter(self.mod_name, "simpler: FracSctr", "FracSctr")
-        self.UpScOnly = Parameter(self.mod_name, "simpler: UpScOnly", "UpScOnly")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Nthcomp(object):
-    def __init__(self):
-        self.mod_name = "nthComp"
-        self.Gamma = Parameter(self.mod_name, "nthComp: Gamma", "Gamma")
-        self.kT_e = Parameter(self.mod_name, r"nthComp: kT$_{e}$ (keV)", "kT_e")
-        self.kT_bb = Parameter(self.mod_name, r"nthComp: kT$_{bb}$ (keV)", "kT_bb")
-        self.inp_type = Parameter(self.mod_name, "nthComp: inp type", "inp_type")
-        self.Redshift = Parameter(self.mod_name, "nthComp: Redshift", "Redshift")
-        self.norm = Parameter(self.mod_name, "nthComp: norm", "norm")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Diskbb(object):
-    def __init__(self):
-        self.mod_name = "diskbb"
-        self.Tin = Parameter(self.mod_name, r"diskbb: T$_{in}$ (keV)", "Tin")
-        self.norm = Parameter(self.mod_name, "diskbb: norm", "norm")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Diskpbb(object):
-    def __init__(self):
-        self.mod_name = "diskpbb"
-        self.Tin = Parameter(self.mod_name, r"diskpbb: T$_{in}$ (keV)", "Tin")
-        self.p = Parameter(self.mod_name, "diskpbb: p", " p ")
-        self.norm = Parameter(self.mod_name, "diskpbb: norm", "norm")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Bbodyrad(object):
-    def __init__(self):
-        self.mod_name = "bbodyrad"
-        self.kT = Parameter(self.mod_name, "bbodyrad: kT (keV)", "kT")
-        self.norm = Parameter(self.mod_name, "bbodyrad: norm", "norm")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Gaussian(object):
-    def __init__(self):
-        self.mod_name = "gaussian"
-        self.LineE = Parameter(self.mod_name, "gaussian: LineE (keV)", "LineE")
-        self.Sigma = Parameter(self.mod_name, "gaussian: Sigma (keV)", "Sigma")
-        self.norm = Parameter(self.mod_name, "gaussian: norm", "norm")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Diskline(object):
-    def __init__(self, mod_name):
-        self.mod_name = mod_name
-        self.LineE = Parameter(mod_name, r"diskline: LineE (keV)", "LineE")
-        self.norm = Parameter(mod_name, r"diskline: norm", "norm")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
-
-
-class Cutoffpl(object):
-    def __init__(self, mod_name):
-        self.mod_name = mod_name
-        self.PhoIndex = Parameter(mod_name, r"cutoffpl: PhoIndex", "PhoIndex")
-        self.norm = Parameter(mod_name, r"cutoffpl: norm", "norm")
-
-    def __str__(self):
-        return "%s" % (self.mod_name)
 
 
 ################################################################################
@@ -316,7 +178,7 @@ def get_chain_errors(mod_components, par_nums, lo_v, hi_v, neg_err, pos_err):
 
 
 ################################################################################
-def read_log_file(log_file, quiet):
+def read_log_file(log_file, quiet=True):
     """
     Reads the XSPEC log file and assigns parameters to Parameter objects, with
     the expectation that chatter is set to 4.
@@ -333,10 +195,10 @@ def read_log_file(log_file, quiet):
 
     Returns
     -------
-    var_pars : list of Parameter objects
-        A 1-D list of the untied SED parameters that vary with QPO phase.
+    mod_components : list of Parameter objects
+        A 1-D list of all SED parameters for the model.
 
-    int
+    num_spectra : int
         Number of spectra being simultaneously fit for one QPO phase.
     """
 
@@ -344,11 +206,15 @@ def read_log_file(log_file, quiet):
         raise Exception("Log file does not exist or is empty.")
 
     chains = False
-    mod_components = [Phabs().nH, Simpler().Gamma, Simpler().FracSctr, \
-            Simpler().UpScOnly, Simpl().Gamma, Simpl().FracSctr, \
-            Simpl().UpScOnly, Diskbb().Tin, Diskbb().norm, Diskpbb().Tin, \
-            Diskpbb().p, Diskpbb().norm, Bbodyrad().kT, Bbodyrad().norm, \
-            Gaussian().LineE, Gaussian().Sigma, Gaussian().norm]
+    mod_components = [sed_pars.Phabs().nH, sed_pars.Simpler().Gamma,
+            sed_pars.Simpler().FracSctr, sed_pars.Simpler().UpScOnly,
+            sed_pars.Simpl().Gamma, sed_pars.Simpl().FracSctr,
+            sed_pars.Simpl().UpScOnly, sed_pars.Diskbb().Tin,
+            sed_pars.Diskbb().norm, sed_pars.Diskpbb().Tin,
+            sed_pars.Diskpbb().p, sed_pars.Diskpbb().norm,
+            sed_pars.Bbodyrad().kT, sed_pars.Bbodyrad().norm,
+            sed_pars.Gaussian().LineE, sed_pars.Gaussian().Sigma,
+            sed_pars.Gaussian().norm]
 
     #################################################
     ## Reading in parameter values from the log file
@@ -360,14 +226,14 @@ def read_log_file(log_file, quiet):
             for component in mod_components:
                 if component.mod_name in line and component.par_name in line:
                     if "frozen" in line:
-                        component.value = np.append(component.value, \
+                        component.value = np.append(component.value,
                             float(line.split()[-2]))
-                        component.par_num = np.append(component.par_num, \
+                        component.par_num = np.append(component.par_num,
                             int(line.split()[1]))
                     else:
-                        component.value = np.append(component.value, \
+                        component.value = np.append(component.value,
                                 float(line.split()[-3]))
-                        component.par_num = np.append(component.par_num, \
+                        component.par_num = np.append(component.par_num,
                                 int(line.split()[1]))
 
             if "Parameter" in line and "Confidence Range" in line:
@@ -434,7 +300,7 @@ def read_log_file(log_file, quiet):
 
 
 ################################################################################
-def make_var_plots(plot_file, num_spectra, var_pars, quiet):
+def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
     """
     Making plots of SED parameters vs phase for multiple co-varying parameters.
 
@@ -450,7 +316,7 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet):
         A 1-D list of the SED parameters that vary with QPO phase.
 
     quiet : bool
-        If True, will not open the plot made.
+        If True, will not open the plot made. [False]
     """
 
     font_prop = font_manager.FontProperties(size=18)
@@ -661,6 +527,64 @@ def get_phase(parameter, num_spectra, quiet):
 
     return parameter
 
+def write_varpars(varying_params, fitfunc_file, num_spec=24):
+    """
+    NOT DOING THIS ANYMORE. Need to keep all segments so I can compute the
+    variance.
+    """
+    varpar_fits_file = fitfunc_file.replace("_funcfit.txt", "_varpars.txt")
+
+    this_boot = np.zeros(num_spec)
+    for single_par in varying_params:
+        this_boot = np.vstack((this_boot, single_par.value))
+    this_boot = this_boot[1:,]
+    # print this_boot
+    # print "Boot shape:", np.shape(this_boot)
+
+    if not os.path.isfile(varpar_fits_file):
+        to_save = this_boot
+    else:
+        data = np.loadtxt(varpar_fits_file, delimiter='    ')
+        # print "Data shape:", np.shape(data)
+        to_save = data + this_boot
+        # print to_save
+    # print np.shape(to_save)
+
+    np.savetxt(varpar_fits_file, to_save, fmt='%.6e', delimiter='    ')
+
+def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
+    """
+    Determines which SED parameters are varying with QPO phase, based on the log
+    file from XSPEC.
+
+    Parameters
+    ----------
+    mod_components : np.array of sed_pars.Parameter objects
+        1-D array of the components of the whole energy spectral model.
+
+    n_spectra : int
+        The number of SEDs in one QPO 'phase', being fit simultaneously. [24]
+
+    quiet : bool
+        Flag to print output or not; if True, will print each parameter name
+        and its mean value. [False]
+
+    Returns
+    -------
+    var_pars : np.array of sed_pars.Parameter objects
+        1-D array of the SED components that vary with QPO phase.
+
+    """
+    var_pars = np.array([])
+    for component in mod_components:
+        if not quiet:
+            print component.par_name, "mean:", np.mean(component.value)
+        if component.varying:
+            component = get_phase(component, n_spectra, quiet)
+            var_pars = np.append(var_pars, component)
+        # print "%s %s phase: %.4f +- %.4f" % (parameter.mod_name, \
+        #         parameter.par_name, parameter.phase, parameter.phase_err)
+    return var_pars
 
 ################################################################################
 def main(log_file, mod_string="", write_func="", quiet=False):
@@ -692,24 +616,14 @@ def main(log_file, mod_string="", write_func="", quiet=False):
     ## Reading in the log file to data arrays
     ##########################################
 
-    mod_components, num_spectra = read_log_file(log_file, quiet)
-
-    # print "Number of spectra:", num_spectra
+    mod_components, num_spectra = read_log_file(log_file, quiet=quiet)
 
     ######################################################################
     ## Computing the phase of the best-fit function and phase difference
     ######################################################################
 
-    var_pars = []
-
-    for component in mod_components:
-        if not quiet:
-            print component.par_name, "mean:", np.mean(component.value)
-        if component.varying:
-            component = get_phase(component, num_spectra, quiet)
-            var_pars.append(component)
-        # print "%s %s phase: %.4f +- %.4f" % (parameter.mod_name, \
-        #         parameter.par_name, parameter.phase, parameter.phase_err)
+    var_pars = determine_varying_parameters(mod_components, \
+            n_spectra=num_spectra, quiet=quiet)
 
     if write_func != "":
         if not quiet:
@@ -726,7 +640,6 @@ def main(log_file, mod_string="", write_func="", quiet=False):
                 else:
                     out.write("%.4e    " % component.value[0])
             out.write("\n")
-
 
     #################################################################
     ## Make plot showing the varying parameters and print phase diff

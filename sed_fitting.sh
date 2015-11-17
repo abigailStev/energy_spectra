@@ -57,10 +57,10 @@ out_name="${prefix}_${day}_t${dt}_${numsec}sec_adj"
 
 spec_type=0  # 0 for mean+ccf, 1 for ccf, 2 for mean
 
-#fit_specifier="1BB-FS-G-Tin"
+fit_specifier="1BB-FS-G-Tin"
 #fit_specifier="1BB-FS-G"
 #fit_specifier="pBB-FS-Tin-G"
-fit_specifier="2BB-FS-G-kT"
+#fit_specifier="2BB-FS-G-kT"
 fit_specifier+="-fzs-fzNbb"
 #fit_specifier+="-fzs"
 #fit_specifier+="-fzNbb"
@@ -191,8 +191,8 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
 #	mod_vals+="& & & 0.2 & & & & & & 0.01"  ## FracSctr and norm(E)
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & "  ## FracSctr, Gamma, Tin
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$"
+	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & "  ## FracSctr, Gamma, Tin
+	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & 3000 & & & "  ## FracSctr, Gamma, norm(BB)
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} norm"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr, Gamma, lineE
@@ -249,8 +249,8 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
 #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  & .6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## Gamma and bb kT
 #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  &  & 2500 &  & &  "  ## Gamma and bb norm
-	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## Gamma and FracSctr and bb kT
-    varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{simpler} Gamma"
+#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## Gamma and FracSctr and bb kT
+#    varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{simpler} Gamma"
 #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  & 2000 &  & &  "  ## Gamma and FracSctr and bb norm
 #    varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} norm "
 #	mod_vals+=" &  & & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## FracSctr and bb kT and bb norm
@@ -377,64 +377,64 @@ echo "abund wilm" >> $xspec_script
 ##
 ## GX339-4 spectral model #1:  simpler * diskbb + gauss
 ##
-#model_string="phabs*(simpler*diskbb+gauss)"
-#echo "mod ${model_string} $mod_vals" >> $xspec_script
-#echo "newpar 1 0.6" >> $xspec_script ## From Reynolds and Miller 2013
-#echo "freeze 1" >> $xspec_script
-#echo "newpar 2 2.6 0.005 2.0 2.0 3.1 3.1" >> $xspec_script
-#echo "newpar 3 0.2" >> $xspec_script
-#echo "newpar 4 1" >> $xspec_script
-#echo "freeze 4" >> $xspec_script
-#echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
-##echo "newpar 5 0.830878" >> $xspec_script
-##echo "freeze 5" >> $xspec_script
-##fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
-#echo "newpar 6 2505.72" >> $xspec_script
-#echo "freeze 6" >> $xspec_script
-#fzpar="\\texttt{diskbb} norm=2505.72"
-#echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-##echo "newpar 8 0.5 .005 0.1 0.1 0.8 0.8" >> $xspec_script
-#echo "newpar 8 0.97" >> $xspec_script  ## Value from steppar on mean spectrum
-#echo "freeze 8" >> $xspec_script
-#fzpar+="\\texttt{gauss} sigma=0.97 "
-#echo "newpar 9 1.0E-02" >> $xspec_script
+model_string="phabs*(simpler*diskbb+gauss)"
+echo "mod ${model_string} $mod_vals" >> $xspec_script
+echo "newpar 1 0.6" >> $xspec_script ## From Reynolds and Miller 2013
+echo "freeze 1" >> $xspec_script
+echo "newpar 2 2.6 0.005 2.0 2.0 3.1 3.1" >> $xspec_script
+echo "newpar 3 0.2" >> $xspec_script
+echo "newpar 4 1" >> $xspec_script
+echo "freeze 4" >> $xspec_script
+echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
+#echo "newpar 5 0.830878" >> $xspec_script
+#echo "freeze 5" >> $xspec_script
+#fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
+echo "newpar 6 2505.72" >> $xspec_script
+echo "freeze 6" >> $xspec_script
+fzpar="\\texttt{diskbb} norm=2505.72"
+echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
+#echo "newpar 8 0.5 .005 0.1 0.1 0.8 0.8" >> $xspec_script
+echo "newpar 8 0.97" >> $xspec_script  ## Value from steppar on mean spectrum
+echo "freeze 8" >> $xspec_script
+fzpar+="\\texttt{gauss} sigma=0.97 "
+echo "newpar 9 1.0E-02" >> $xspec_script
 
 ##
 ## GX339-4 spectral model #2:  simpler * diskbb + bbodyrad + gauss
 ##
-model_string="phabs*(simpler*diskbb+bbodyrad+gauss)"
-echo "mod ${model_string} $mod_vals" >> $xspec_script
-echo "newpar 1 0.6" >> $xspec_script
-echo "freeze 1" >> $xspec_script
-echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
-echo "newpar 3 0.2" >> $xspec_script
-echo "newpar 4 1" >> $xspec_script
-echo "freeze 4" >> $xspec_script
-echo "newpar 5 0.83 0.002 0.6 0.6 1.0 1.0" >> $xspec_script
-##echo "newpar 5 0.955420" >> $xspec_script
-#echo "newpar 5 0.830759333333" >> $xspec_script
-#echo "freeze 5" >> $xspec_script
-#fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$=0.830759333333"
-#echo "newpar 6 3214.06" >> $xspec_script
-echo "newpar 6 2500" >> $xspec_script
-#echo "freeze 6" >> $xspec_script
-#fzpar="\\texttt{diskbb} norm"
-echo "newpar 7 0.6 0.002 0.01 0.01 1.0 1.0" >> $xspec_script
-#echo "newpar 7 0.537252" >> $xspec_script
-#echo "freeze 7" >> $xspec_script
-#fzpar="\\texttt{bbodyrad} kT"
-#echo "newpar 8 1000" >> $xspec_script
-#echo "newpar 8 1.28841E+04" >> $xspec_script
-echo "newpar 8 597.299" >> $xspec_script
-echo "freeze 8" >> $xspec_script
-fzpar="\\texttt{bbodyrad} norm = 1.28841E+04"
-echo "newpar 9 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-#echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script  ## Value from steppar on mean spectrum
-echo "newpar 10 0.82" >> $xspec_script  ## Value from steppar on mean spectrum
-#echo "newpar 10 0.56" >> $xspec_script  ## Value from steppar on mean spectrum
-echo "freeze 10" >> $xspec_script
-fzpar+=" \\texttt{gauss} sigma=0.82"
-echo "newpar 11 0.01" >> $xspec_script
+#model_string="phabs*(simpler*diskbb+bbodyrad+gauss)"
+#echo "mod ${model_string} $mod_vals" >> $xspec_script
+#echo "newpar 1 0.6" >> $xspec_script
+#echo "freeze 1" >> $xspec_script
+#echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+#echo "newpar 3 0.2" >> $xspec_script
+#echo "newpar 4 1" >> $xspec_script
+#echo "freeze 4" >> $xspec_script
+#echo "newpar 5 0.83 0.002 0.6 0.6 1.0 1.0" >> $xspec_script
+###echo "newpar 5 0.955420" >> $xspec_script
+##echo "newpar 5 0.830759333333" >> $xspec_script
+##echo "freeze 5" >> $xspec_script
+##fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$=0.830759333333"
+##echo "newpar 6 3214.06" >> $xspec_script
+#echo "newpar 6 2500" >> $xspec_script
+##echo "freeze 6" >> $xspec_script
+##fzpar="\\texttt{diskbb} norm"
+#echo "newpar 7 0.6 0.002 0.01 0.01 1.0 1.0" >> $xspec_script
+##echo "newpar 7 0.537252" >> $xspec_script
+##echo "freeze 7" >> $xspec_script
+##fzpar="\\texttt{bbodyrad} kT"
+##echo "newpar 8 1000" >> $xspec_script
+##echo "newpar 8 1.28841E+04" >> $xspec_script
+#echo "newpar 8 597.299" >> $xspec_script
+#echo "freeze 8" >> $xspec_script
+#fzpar="\\texttt{bbodyrad} norm = 1.28841E+04"
+#echo "newpar 9 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
+##echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script  ## Value from steppar on mean spectrum
+#echo "newpar 10 0.82" >> $xspec_script  ## Value from steppar on mean spectrum
+##echo "newpar 10 0.56" >> $xspec_script  ## Value from steppar on mean spectrum
+#echo "freeze 10" >> $xspec_script
+#fzpar+=" \\texttt{gauss} sigma=0.82"
+#echo "newpar 11 0.01" >> $xspec_script
 
 ##
 ## FOR GX339-4 2010 outburst, using diskpbb
@@ -667,7 +667,7 @@ xspec "$xspec_script" > $dump_file    ## use this one if you expect interactivit
 
 #open -a "TextWrangler" "$xspec_script"
 #open "${ratio_plot}.eps"
-open "${first_plot}.eps"
+#open "${first_plot}.eps"
 #open "$xspec_log"
 
 chis=$(tail -n 1 chi.txt)
@@ -684,9 +684,12 @@ cd ..
 parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_sines.txt"
 if [ ! -e "$parfit_file" ]; then touch "$parfit_file"; fi
 
-echo "python $exe_dir/multifit_plots.py $out_dir/$xspec_log"
-#python $exe_dir/multifit_plots.py "$out_dir/$xspec_log"
-python $exe_dir/multifit_plots.py "$out_dir/$xspec_log" --mod_string "\"${model_string}\"" -w "$parfit_file"
+echo "python $exe_dir/multifit_plots.py $out_dir/$xspec_log" \
+        --mod_string "\"${model_string}\"" \
+        -w "$parfit_file"
+python $exe_dir/multifit_plots.py "$out_dir/$xspec_log" \
+        --mod_string "\"${model_string}\"" \
+        -w "$parfit_file"
 
 #open "$tex_tab_file"
 #open "$parfit_file"

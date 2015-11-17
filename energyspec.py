@@ -53,6 +53,7 @@ def ccf_in(in_file, phase_bin):
     table = file_hdu[1].data
     obs_time = file_hdu[0].header['EXPOSURE']
     detchans = file_hdu[0].header['DETCHANS']
+    # detchans = 64
     mean_count_rate = get_mean_count_rate(file_hdu[0].header['RATE_CI'])
     mean_count_rate[np.where(mean_count_rate < 0.0)] = 0
     file_hdu.close()
@@ -76,9 +77,6 @@ def main(in_file, out_file, phase_bin, spec_type):
     ##################################
     ## Initializations and assertions
     ##################################
-
-    amps = []
-    err = []
 
     assert in_file[-4:].lower() == 'fits', "ERROR: Input file must have "\
             "extension .fits."
@@ -134,7 +132,7 @@ if __name__ == "__main__":
     parser.add_argument('outfile', help="The full path of the FITS output file"\
             " to write the energy spectrum to.")
 
-    parser.add_argument('-b', '--bin', type=type_positive_int, dest='phase_bin', \
+    parser.add_argument('-b', '--bin', type=int, dest='phase_bin', \
             default=0, help="The phase bin number of the CCF to make an energy"\
             " spectrum for. [0]")
 

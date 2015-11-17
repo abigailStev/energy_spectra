@@ -64,8 +64,8 @@ fit_specifier+="-fzs-fzNbb"
 #fit_specifier+="-wMCMC"
 export fit_specifier
 
-tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/ensp_models.txt"
-parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_sines.txt"
+tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/ensp_models_boot_1BB.txt"
+parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_funcfit.txt"
 tab_ext="dat"
 plot_ext="eps"
 
@@ -94,7 +94,7 @@ obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_fil
 ## Looping through the bootstrap iterations
 ############################################
 for (( b=1; b<=boot_num; b++ )); do
-	if (( b % 1 == 0 )); then echo -e "\t $b"; fi
+	if (( b % 5 == 0 )); then echo -e "\t $b"; fi
 
 	boot_fit_specifier="${fit_specifier}_b-${b}"
     out_name="${prefix}_${day}_t${dt}_${numsec}sec_adj_b-${b}"
@@ -188,18 +188,6 @@ for (( b=1; b<=boot_num; b++ )); do
         ##
     #	mod_vals+="& & & & & & & & & "  ##  all tied
     #	varpar=" - "
-    #	mod_vals+="& & & 0.2 & & & & & & "  ## FracSctr
-    #	varpar="\\texttt{simpler} FracSctr"
-    #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & & & & & & & " ## Gamma
-    #	varpar="\\texttt{simpler} Gamma"
-    #	mod_vals+="& & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## Tin
-    #	varpar="\\texttt{diskbb} T\$_{\\text{in}}"
-    #	mod_vals+="& & & & & & 3000 & & & " ##  norm(BB)
-    #	varpar="\\texttt{diskbb} norm"
-    #	mod_vals+="& & & & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## lineE
-    #	varpar="\\texttt{gauss} LineE"
-    #	mod_vals+="& & & & & & & & & 0.01"  ## norm(E)
-    #	varpar="\\texttt{gauss} norm"
     #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & & " ## FracSctr and Gamma
     #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
     #	mod_vals+="& & & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## FracSctr and Tin
@@ -230,18 +218,6 @@ for (( b=1; b<=boot_num; b++ )); do
         ##
     #	mod_vals+=" &  &  &     &  & &  &  &  &  & &  "  ## All tied
     #	varpar=" - "
-    #	mod_vals+=" &  &  & 0.2 &  & &  &  &  &  & &   "   ## FracSctr
-    #	varpar="\\texttt{simpler} FracSctr"
-    #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & &  & &  &  &  &  & &  "  ## Gamma
-    #	varpar="\\texttt{simpler} Gamma"
-    #	mod_vals+=" &  &  &  &  & &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## bb kT
-    #	varpar="\\texttt{bbodyrad} kT"
-    #	mod_vals+=" &  & &  &  & &  &  & 400 &  & &  "  ## bb norm
-    #	varpar="\\texttt{bbodyrad} norm"
-    #	mod_vals+=" &  & &  &  & &  &  &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## line E
-    #	varpar="\\texttt{gauss} LineE"
-    #    mod_vals+=" &  & &  &  & &  &  &  & &  & 0.01 "  ## E norm
-    #	varpar="\\texttt{gauss} norm"
     #    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  &  &  & &  "  ## FracSctr and Gamma
     #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
     #	mod_vals+=" &  &  & 0.2 &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  &  &  & & " ## FracSctr and diskbb Tin
@@ -280,20 +256,6 @@ for (( b=1; b<=boot_num; b++ )); do
         ##
     #	mod_vals+=" &  &  &  &  & & & & & &  "  ## All tied
     #    varpar=" - "
-    #	mod_vals+=" &  &  & 0.2 &  &  & &  &  &  &  "   ## FracSctr
-    #	varpar="\\texttt{simpler} FracSctr"
-    #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & &  & &  &  &  & &  "  ## Gamma
-    #	varpar="\\texttt{simpler} Gamma"
-    #	mod_vals+=" &  &  &  &  & 0.6 .002 0.1 0.1 1.0 1.0 & &  &  & & " ## diskpbb Tin
-    #	varpar="\\texttt{diskpbb} T\$_{\\text{in}}\$"
-    #	mod_vals+=" &  &  &  &  &  & 0.75 & & &   & " ## diskpbb p
-    #	varpar="\\texttt{diskpbb} p"
-    #	mod_vals+=" &  &  &  &  &  & & 3000 & &  & " ## diskpbb norm
-    #	varpar="\\texttt{diskpbb} norm"
-    #	mod_vals+=" &  & &  &  & &  &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## line E
-    #	varpar="\\texttt{gauss} LineE"
-    #    mod_vals+=" &  & &  &  & &  &  & &  & 0.01 "  ## E norm
-    #	varpar="\\texttt{gauss} norm"
     #    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 & & & & &  &  &  "  ## FracSctr and Gamma
     #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
     #	mod_vals+=" & &  & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & &  & & " ## FracSctr and diskpbb Tin
@@ -330,7 +292,7 @@ for (( b=1; b<=boot_num; b++ )); do
     ((i-=1))
 
     n_params=$(python -c "from tools import get_num_of_params; print get_num_of_params('$mod_vals', '$n_spectra')")
-    echo "n params: $n_params"
+#    echo "n params: $n_params"
     export n_params
 
     ############################################################################
@@ -354,7 +316,7 @@ for (( b=1; b<=boot_num; b++ )); do
     echo "abund wilm" >> $xspec_script
 
     ##
-    ## Simple test for GX339-4 2010 outburst
+    ## phabs*(simpler*diskbb+gauss)
     ##
     model_string="phabs*(simpler*diskbb+gauss)"
     echo "mod ${model_string} $mod_vals" >> $xspec_script
@@ -379,7 +341,7 @@ for (( b=1; b<=boot_num; b++ )); do
     echo "newpar 9 1.0E-02" >> $xspec_script
 
     ##
-    ## FOR GX339-4 2010 outburst, using diskBB
+    ## phabs*(simpler*diskbb+bbodyrad+gauss)
     ##
     #model_string="phabs*(simpler*diskbb+bbodyrad+gauss)"
     #echo "mod ${model_string} $mod_vals" >> $xspec_script
@@ -406,7 +368,7 @@ for (( b=1; b<=boot_num; b++ )); do
     #echo "newpar 11 0.01" >> $xspec_script
 
     ##
-    ## FOR GX339-4 2010 outburst, using diskpbb
+    ## phabs*(simpler*diskpbb+gauss)
     ##
     #model_string="phabs*(simpler*diskpbb+gauss)"
     #echo "mod ${model_string} $mod_vals" >> $xspec_script
@@ -497,6 +459,10 @@ for (( b=1; b<=boot_num; b++ )); do
     #############################
     ## Running multifit_plots.py
     #############################
+#    echo python $exe_dir/multifit_plots.py "$out_dir/$xspec_log" \
+#            --mod_string "\"${model_string}\"" \
+#            -w "$parfit_file" \
+#            --quiet
 
     python $exe_dir/multifit_plots.py "$out_dir/$xspec_log" \
             --mod_string "\"${model_string}\"" \

@@ -70,7 +70,7 @@ if [ -e "$ccf_file" ]; then
 	if [ "${ccf_file##*.}" == "dat" ]; then
 		obs_time=$(python -c "from tools import read_obs_time; print read_obs_time('$ccf_file')")
 	elif [ "${ccf_file##*.}" == "fits" ]; then
-		obs_time=$(python -c "from tools import get_key_val;  print get_key_val('$ccf_file', 0, 'EXPOSURE')")
+		obs_time=$(python -c "from tools import get_key_val;  print get_key_val('$ccf_file', 1, 'EXPOSURE')")
 	fi
 	echo -e "EXPOSURE TIME =" $obs_time "s\n"
 else
@@ -104,6 +104,8 @@ else
 	echo -e "\tERROR: energyspec.py was not run. CCF output file does not "\
 			"exist."
 fi
+
+exit
 
 if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
 	[ -e "$bkgd_spec" ]; then

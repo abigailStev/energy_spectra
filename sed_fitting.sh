@@ -88,7 +88,7 @@ plot_ext="eps"
 if [ ! -d "$out_dir" ]; then mkdir -p "$out_dir"; fi
 if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
 
-obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_file', 0, 'EXPOSURE')")
+obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_file', 1, 'EXPOSURE')")
 #echo "$obs_time"
 echo "lmod simpler /Users/abigailstevens/Dropbox/Research/xspecmods/" >> $xspec_script
 

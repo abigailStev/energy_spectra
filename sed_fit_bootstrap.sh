@@ -66,6 +66,8 @@ export fit_specifier
 
 tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/ensp_models_boot_1BB.txt"
 parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_funcfit.txt"
+multifit_giflist="$out_dir/${prefix}_${day}_${fit_specifier}_multifit_giflist.txt"
+multifit_gif="$out_dir/${prefix}_${day}_${fit_specifier}_multifit.gif"
 tab_ext="dat"
 plot_ext="eps"
 
@@ -74,6 +76,8 @@ plot_ext="eps"
 
 if [ ! -d "$out_dir" ]; then mkdir -p "$out_dir"; fi
 if [ -e "$parfit_file" ]; then rm "$parfit_file"; fi; touch "$parfit_file"
+if [ -e "$multifit_giflist" ]; then rm "$multifit_giflist"; fi
+touch "$multifit_giflist"
 if [ ! -e "$tex_tab_file" ]; then touch "$tex_tab_file"; fi
 
 if [ -e "$data_dir/PCU2.rsp" ]; then
@@ -87,7 +91,7 @@ ccf_file="$ccf_dir/${prefix}_${day}_t${dt}_${numsec}sec_adj_b-1.fits"
 if (( $testing==1 )); then
     ccf_file="$ccf_dir/test_${prefix}_${day}_t${dt}_${numsec}sec_adj_b-1.fits"
 fi
-obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_file', 0, 'EXPOSURE')")
+obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_file', 1, 'EXPOSURE')")
 #echo "$obs_time"
 
 ############################################
@@ -469,7 +473,17 @@ for (( b=1; b<=boot_num; b++ )); do
             -w "$parfit_file" \
             --quiet
 
+    if [ -e "$out_dir/${prefix}_${day}_${boot_fit_specifier}_xspec.eps" ]; then
+        echo "$out_dir/${prefix}_${day}_${boot_fit_specifier}_xspec.eps" >> $multifit_giflist
+    fi
+
 done
+
+convert @"$multifit_giflist" "$multifit_gif"
+if [ -e "$multifit_gif" ]; then
+	echo "GIF made! $multifit_gif"
+	open "$multifit_gif"
+fi
 
 #open "$tex_tab_file"
 open "$parfit_file"

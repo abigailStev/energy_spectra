@@ -220,7 +220,6 @@ def read_log_file(log_file, quiet=True):
     ## Reading in parameter values from the log file
     #################################################
 
-    print("")
     with open(log_file, 'r') as f:
         for line in f:
             for component in mod_components:
@@ -286,7 +285,7 @@ def read_log_file(log_file, quiet=True):
         exit()
 
     if chains:
-        mod_components = get_chain_errors(mod_components, par_nums, lo_v, hi_v,\
+        mod_components = get_chain_errors(mod_components, par_nums, lo_v, hi_v,
                 neg_err, pos_err)
 
     if not chains:
@@ -320,7 +319,7 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
     """
 
     font_prop = font_manager.FontProperties(size=18)
-    xLocator = MultipleLocator(0.05)  ## loc of minor ticks on y-axis
+    xLocator = MultipleLocator(0.05)  ## loc of minor ticks on x-axis
 
     phase = np.arange(num_spectra) / 23.646776
     tinybins = np.arange(-0.02, 1.02, 0.01)
@@ -368,7 +367,7 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
             #         2*param.phase_err, ymax-ymin, color='pink', ec="none",
             #         alpha=0.5)
             # ax.add_patch(rect)
-            phase_width = np.round(2.0*param.phase_err/0.002, decimals=1)
+            phase_width = np.round(2.0 * param.phase_err / 0.002, decimals=1)
             # print phase_width
             # print 2*param.phase_err
             ax.plot(tinybins, param.funcfit, c='black', lw=2)
@@ -516,9 +515,16 @@ def get_phase(parameter, num_spectra, quiet):
     ## bonus matrix by the variance of the residuals to get the covariance
     ## matrix.
 
-    # print("\t %s" % str(resid_var))
-    # print("\t %s" % str(bonus_matrix))
-    cov_matrix = bonus_matrix * resid_var
+    try:
+        cov_matrix = bonus_matrix * resid_var
+    except TypeError:
+        # print("\t %s" % str(resid_var))
+        # print("\t %s" % str(bonus_matrix))
+        parameter.best_fit = np.nan
+        parameter.funcfit = np.nan
+        parameter.phase = np.nan
+        parameter.phase_err = np.nan
+        return parameter
 
     parameter.best_fit = best_fit
     parameter.funcfit = fit_function(np.arange(-0.02, 1.02, 0.01), best_fit)

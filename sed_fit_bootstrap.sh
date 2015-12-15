@@ -3,7 +3,7 @@
 ################################################################################
 ## 
 ## Use in rxte_reduce/ccf_bootstrap.sh with ccf_bootstrap.sh and
-## simulate_qpo_bootstrap.sh.
+## sim_qpo_bootstrap.py.
 ##
 ## Bash script for phase-resolved spectroscopy: run energyspec.py to make phase-
 ## resolved energy spectra, make an XSPEC SED fitting script, run
@@ -14,16 +14,16 @@
 ## Change the directory names and specifiers before the double '#' row to best
 ## suit your setup.
 ##
-## Notes: HEASOFT 6.11.*, bash 3.*, and Python 2.7.* (with supporting libraries) 
+## Notes: HEASOFT 6.14.*, bash 3.*, and Python 2.7.* (with supporting libraries)
 ## 		  must be installed in order to run this script. 
 ##
-## Written by Abigail Stevens, A.L.Stevens at uva.nl, 2015
+## Author: Abigail Stevens <A.L.Stevens at uva.nl> 2015
 ##
 ################################################################################
 
 ## Checking the number of input arguments
 if (( $# != 6 )); then
-    echo -e "\tUsage: ./sed_fitting.sh <prefix> <dt multiple> <num "\
+    echo -e "\tUsage: ./sed_fit_bootstrap.sh <prefix> <dt multiple> <num "\
         "seconds> <testing> <date> <num of bootstrap>\n"
     exit
 fi
@@ -54,17 +54,17 @@ rsp_matrix="${prefix}_PCU2.rsp"
 
 spec_type=0  # 0 for mean+ccf, 1 for ccf, 2 for mean
 
-fit_specifier+="1BB-FS-G-Tin"
+#fit_specifier+="1BB-FS-G-Tin"
 #fit_specifier+="1BB-FS-G"
 #fit_specifier+="pBB-FS-Tin-G"
-#fit_specifier+="2BB-FS-G-kT"
+fit_specifier+="2BB-FS-G-kT"
 fit_specifier+="-fzs-fzNbb"
 #fit_specifier+="-fzs"
 #fit_specifier+="-fzNbb"
 #fit_specifier+="-wMCMC"
 export fit_specifier
 
-tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/ensp_models_boot_1BB.txt"
+tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/textab_${fit_specifier}_boot.txt"
 parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_funcfit.txt"
 multifit_giflist="$out_dir/${prefix}_${day}_${fit_specifier}_multifit_giflist.txt"
 multifit_gif="$out_dir/${prefix}_${day}_${fit_specifier}_multifit.gif"
@@ -74,9 +74,9 @@ plot_ext="eps"
 ################################################################################
 
 if [ ! -d "$out_dir" ]; then mkdir -p "$out_dir"; fi
-#if [ -e "$parfit_file" ]; then rm "$parfit_file"; fi; touch "$parfit_file"
-#if [ -e "$multifit_giflist" ]; then rm "$multifit_giflist"; fi
-#touch "$multifit_giflist"
+if [ -e "$parfit_file" ]; then rm "$parfit_file"; fi; touch "$parfit_file"
+if [ -e "$multifit_giflist" ]; then rm "$multifit_giflist"; fi
+touch "$multifit_giflist"
 if [ ! -e "$tex_tab_file" ]; then touch "$tex_tab_file"; fi
 
 if [ -e "$data_dir/PCU2.rsp" ]; then
@@ -96,7 +96,7 @@ obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_fil
 ############################################
 ## Looping through the bootstrap iterations
 ############################################
-for (( b=2001; b<=boot_num; b++ )); do
+for (( b=1; b<=boot_num; b++ )); do
 	if (( b % 50 == 0 )); then echo -e "\t $b"; fi
 
 	boot_fit_specifier="${fit_specifier}_b-${b}"
@@ -135,42 +135,46 @@ for (( b=2001; b<=boot_num; b++ )); do
         fi
 
         out_end="${out_name}_ccfwmean_${tbin}bin"
-        if [ -e "${ccf_file}" ]; then
-            python "$exe_dir"/energyspec.py "${ccf_file}" \
-                    "${out_end}.dat" -b "$tbin" -s "$spec_type"
-    #        echo "${ccf_file}"
-    #        echo "${out_end}.dat"
-    #        open -a "TextWrangler" "${out_end}.dat"
-        else
-            echo -e "\tERROR: ${ccf_file} does not exist, energyspec.py was NOT run."
+
+        if [ ! -e "${out_end}.dat" ]; then
+            if [ -e "${ccf_file}" ]; then
+                python "$exe_dir"/energyspec.py "${ccf_file}" \
+                        "${out_end}.dat" -b "$tbin" -s "$spec_type"
+        #        echo "${ccf_file}"
+        #        echo "${out_end}.dat"
+        #        open -a "TextWrangler" "${out_end}.dat"
+            else
+                echo -e "\tERROR: ${ccf_file} does not exist, energyspec.py was NOT run."
+            fi
         fi
 
-        if [ -e "$rsp_matrix" ] && [ -e "${out_end}.dat" ]; then
-            ascii2pha infile="${out_end}.dat" \
-                outfile="${out_end}.pha" \
-                chanpres=yes \
-                dtype=2 \
-                qerror=yes \
-                rows=- \
-                tlmin=0 \
-                detchans=64 \
-                pois=no \
-                telescope=XTE \
-                instrume=PCA \
-                detnam=PCU2 \
-                filter=NONE \
-                exposure=$obs_time \
-                clobber=yes \
-                respfile="$rsp_matrix" > $dump_file
-        ## Don't need to include background file since I've subtracted
-        ## background count rate per energy channel from the mean count rate
-        ## per CI
+        if [ ! -e "${out_end}.pha" ]; then
+            if [ -e "$rsp_matrix" ] && [ -e "${out_end}.dat" ]; then
+                ascii2pha infile="${out_end}.dat" \
+                    outfile="${out_end}.pha" \
+                    chanpres=yes \
+                    dtype=2 \
+                    qerror=yes \
+                    rows=- \
+                    tlmin=0 \
+                    detchans=64 \
+                    pois=no \
+                    telescope=XTE \
+                    instrume=PCA \
+                    detnam=PCU2 \
+                    filter=NONE \
+                    exposure=$obs_time \
+                    clobber=yes \
+                    respfile="$rsp_matrix" > $dump_file
+            ## Don't need to include background file since I've subtracted
+            ## background count rate per energy channel from the mean count rate
+            ## per CI
 
-        else
-            echo -e "\tERROR: ASCII2PHA was not run. Spectrum and/or response "\
-                    "matrix do not exist."
+            else
+                echo -e "\tERROR: ASCII2PHA was not run. Spectrum and/or response "\
+                        "matrix do not exist."
+            fi
         fi
-
         if [ ! -e "${out_end}.pha" ]; then
             echo -e "\tERROR: ASCII2PHA failed to create ${out_end}.pha."
             echo -e "\tExiting script."
@@ -204,8 +208,8 @@ for (( b=2001; b<=boot_num; b++ )); do
     #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
     #	mod_vals+="& & & 0.2 & & & & & & 0.01"  ## FracSctr and norm(E)
     #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
-        mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & "  ## FracSctr, Gamma, Tin
-        varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$"
+#        mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & "  ## FracSctr, Gamma, Tin
+#        varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$"
     #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & 3000 & & & "  ## FracSctr, Gamma, norm(BB)
     #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} norm"
     #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr, Gamma, lineE
@@ -238,8 +242,8 @@ for (( b=2001; b<=boot_num; b++ )); do
     #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
     #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  & .6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## Gamma and bb kT
     #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  &  & 2500 &  & &  "  ## Gamma and bb norm
-    #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## Gamma and FracSctr and bb kT
-    #    varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{simpler} Gamma"
+    	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## Gamma and FracSctr and bb kT
+        varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{simpler} Gamma"
     #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  & 2000 &  & &  "  ## Gamma and FracSctr and bb norm
     #    varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} norm "
     #	mod_vals+=" &  & & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## FracSctr and bb kT and bb norm
@@ -324,54 +328,64 @@ for (( b=2001; b<=boot_num; b++ )); do
     ##
     ## phabs*(simpler*diskbb+gauss)
     ##
-    model_string="phabs*(simpler*diskbb+gauss)"
-    echo "mod ${model_string} $mod_vals" >> $xspec_script
-    echo "newpar 1 0.6" >> $xspec_script ## From Reynolds and Miller 2013
-    echo "freeze 1" >> $xspec_script
-    echo "newpar 2 2.6 0.005 2.0 2.0 3.1 3.1" >> $xspec_script
-    echo "newpar 3 0.2" >> $xspec_script
-    echo "newpar 4 1" >> $xspec_script
-    echo "freeze 4" >> $xspec_script
-    echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
-    #echo "newpar 5 0.830878" >> $xspec_script
-    #echo "freeze 5" >> $xspec_script
-    #fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
-    echo "newpar 6 2505.72" >> $xspec_script
-    echo "freeze 6" >> $xspec_script
-    fzpar="\\texttt{diskbb} norm=2505.72"
-    echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-    #echo "newpar 8 0.5 .005 0.1 0.1 0.8 0.8" >> $xspec_script
-    echo "newpar 8 0.97" >> $xspec_script  ## Value from steppar on mean spectrum
-    echo "freeze 8" >> $xspec_script
-    fzpar+="\\texttt{gauss} sigma=0.97 "
-    echo "newpar 9 1.0E-02" >> $xspec_script
+#    model_string="phabs*(simpler*diskbb+gauss)"
+#    echo "mod ${model_string} $mod_vals" >> $xspec_script
+#    echo "newpar 1 0.6" >> $xspec_script ## From Reynolds and Miller 2013
+#    echo "freeze 1" >> $xspec_script
+#    echo "newpar 2 2.6 0.005 2.0 2.0 3.1 3.1" >> $xspec_script
+#    echo "newpar 3 0.2" >> $xspec_script
+#    echo "newpar 4 1" >> $xspec_script
+#    echo "freeze 4" >> $xspec_script
+#    echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
+#    #echo "newpar 5 0.830878" >> $xspec_script
+#    #echo "freeze 5" >> $xspec_script
+#    #fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
+#    echo "newpar 6 2505.72" >> $xspec_script
+#    echo "freeze 6" >> $xspec_script
+#    fzpar="\\texttt{diskbb} norm=2505.72"
+#    echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
+#    #echo "newpar 8 0.5 .005 0.1 0.1 0.8 0.8" >> $xspec_script
+#    echo "newpar 8 0.97" >> $xspec_script  ## Value from steppar on mean spectrum
+#    echo "freeze 8" >> $xspec_script
+#    fzpar+="\\texttt{gauss} sigma=0.97 "
+#    echo "newpar 9 1.0E-02" >> $xspec_script
 
     ##
     ## phabs*(simpler*diskbb+bbodyrad+gauss)
     ##
-    #model_string="phabs*(simpler*diskbb+bbodyrad+gauss)"
-    #echo "mod ${model_string} $mod_vals" >> $xspec_script
-    #echo "newpar 1 0.6" >> $xspec_script
-    #echo "freeze 1" >> $xspec_script
-    #echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
-    #echo "newpar 3 0.2" >> $xspec_script
-    #echo "newpar 4 1" >> $xspec_script
-    #echo "freeze 4" >> $xspec_script
-    ##echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
-    ##echo "newpar 5 0.744958" >> $xspec_script
-    #echo "newpar 5 0.828058" >> $xspec_script
-    ##echo "freeze 5" >> $xspec_script
-    ##echo "newpar 6 3214.06" >> $xspec_script
-    #echo "newpar 6 2519.16" >> $xspec_script
-    ##echo "freeze 6" >> $xspec_script
-    #echo "newpar 7 0.6 0.002 0.1 0.1 1.0 1.0" >> $xspec_script
-    #echo "newpar 8 2500" >> $xspec_script
-    ##echo "newpar 8 473.804" >> $xspec_script
-    ##echo "newpar 8 671.474" >> $xspec_script
-    ##echo "freeze 8" >> $xspec_script
-    #echo "newpar 9 6.5 0.002 6.4 6.4 6.8 6.8" >> $xspec_script
-    #echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script
-    #echo "newpar 11 0.01" >> $xspec_script
+    model_string="phabs*(simpler*diskbb+bbodyrad+gauss)"
+    echo "mod ${model_string} $mod_vals" >> $xspec_script
+    echo "newpar 1 0.6" >> $xspec_script
+    echo "freeze 1" >> $xspec_script
+    echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+    echo "newpar 3 0.2" >> $xspec_script
+    echo "newpar 4 1" >> $xspec_script
+    echo "freeze 4" >> $xspec_script
+    echo "newpar 5 0.83 0.002 0.6 0.6 1.0 1.0" >> $xspec_script
+    ##echo "newpar 5 0.955420" >> $xspec_script
+    #echo "newpar 5 0.830759333333" >> $xspec_script
+    #echo "freeze 5" >> $xspec_script
+    #fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$=0.830759333333"
+    #echo "newpar 6 3214.06" >> $xspec_script
+    echo "newpar 6 2500" >> $xspec_script
+    #echo "freeze 6" >> $xspec_script
+    #fzpar="\\texttt{diskbb} norm"
+    echo "newpar 7 0.6 0.002 0.01 0.01 1.0 1.0" >> $xspec_script
+    #echo "newpar 7 0.537252" >> $xspec_script
+    #echo "freeze 7" >> $xspec_script
+    #fzpar="\\texttt{bbodyrad} kT"
+    #echo "newpar 8 1000" >> $xspec_script
+    #echo "newpar 8 1.28841E+04" >> $xspec_script
+    echo "newpar 8 597.299" >> $xspec_script
+    echo "freeze 8" >> $xspec_script
+    fzpar="\\texttt{bbodyrad} norm = 1.28841E+04"
+    echo "newpar 9 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
+    #echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script  ## Value from steppar on mean spectrum
+    echo "newpar 10 0.82" >> $xspec_script  ## Value from steppar on mean spectrum
+    #echo "newpar 10 0.56" >> $xspec_script  ## Value from steppar on mean spectrum
+    echo "freeze 10" >> $xspec_script
+    fzpar+=" \\texttt{gauss} sigma=0.82"
+    echo "newpar 11 0.01" >> $xspec_script
 
     ##
     ## phabs*(simpler*diskpbb+gauss)

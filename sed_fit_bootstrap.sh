@@ -68,16 +68,15 @@ tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/ensp_models_boot_1BB.txt"
 parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_funcfit.txt"
 multifit_giflist="$out_dir/${prefix}_${day}_${fit_specifier}_multifit_giflist.txt"
 multifit_gif="$out_dir/${prefix}_${day}_${fit_specifier}_multifit.gif"
-tab_ext="dat"
 plot_ext="eps"
 
 ################################################################################
 ################################################################################
 
 if [ ! -d "$out_dir" ]; then mkdir -p "$out_dir"; fi
-if [ -e "$parfit_file" ]; then rm "$parfit_file"; fi; touch "$parfit_file"
-if [ -e "$multifit_giflist" ]; then rm "$multifit_giflist"; fi
-touch "$multifit_giflist"
+#if [ -e "$parfit_file" ]; then rm "$parfit_file"; fi; touch "$parfit_file"
+#if [ -e "$multifit_giflist" ]; then rm "$multifit_giflist"; fi
+#touch "$multifit_giflist"
 if [ ! -e "$tex_tab_file" ]; then touch "$tex_tab_file"; fi
 
 if [ -e "$data_dir/PCU2.rsp" ]; then
@@ -97,8 +96,8 @@ obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_fil
 ############################################
 ## Looping through the bootstrap iterations
 ############################################
-for (( b=1; b<=boot_num; b++ )); do
-	if (( b % 5 == 0 )); then echo -e "\t $b"; fi
+for (( b=2001; b<=boot_num; b++ )); do
+	if (( b % 50 == 0 )); then echo -e "\t $b"; fi
 
 	boot_fit_specifier="${fit_specifier}_b-${b}"
     out_name="${prefix}_${day}_t${dt}_${numsec}sec_adj_b-${b}"
@@ -138,16 +137,16 @@ for (( b=1; b<=boot_num; b++ )); do
         out_end="${out_name}_ccfwmean_${tbin}bin"
         if [ -e "${ccf_file}" ]; then
             python "$exe_dir"/energyspec.py "${ccf_file}" \
-                    "${out_end}.${tab_ext}" -b "$tbin" -s "$spec_type"
+                    "${out_end}.dat" -b "$tbin" -s "$spec_type"
     #        echo "${ccf_file}"
-    #        echo "${out_end}.${tab_ext}"
-    #        open -a "TextWrangler" "${out_end}.${tab_ext}"
+    #        echo "${out_end}.dat"
+    #        open -a "TextWrangler" "${out_end}.dat"
         else
             echo -e "\tERROR: ${ccf_file} does not exist, energyspec.py was NOT run."
         fi
 
-        if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ]; then
-            ascii2pha infile="${out_end}.${tab_ext}" \
+        if [ -e "$rsp_matrix" ] && [ -e "${out_end}.dat" ]; then
+            ascii2pha infile="${out_end}.dat" \
                 outfile="${out_end}.pha" \
                 chanpres=yes \
                 dtype=2 \
@@ -177,6 +176,9 @@ for (( b=1; b<=boot_num; b++ )); do
             echo -e "\tExiting script."
             exit
         fi
+
+        ## Deleting the .dat file
+        rm "${out_end}.dat"
 
         ## Writing file names to xspec script
         echo "data $i:$i $out_end.pha" >> $xspec_script
@@ -478,15 +480,16 @@ for (( b=1; b<=boot_num; b++ )); do
     fi
 
 done
+echo "Done with fits!"
 
-convert @"$multifit_giflist" "$multifit_gif"
-if [ -e "$multifit_gif" ]; then
-	echo "GIF made! $multifit_gif"
-	open "$multifit_gif"
-fi
+#convert @"$multifit_giflist" "$multifit_gif"
+#if [ -e "$multifit_gif" ]; then
+#	echo "GIF made! $multifit_gif"
+#	open "$multifit_gif"
+#fi
 
 #open "$tex_tab_file"
-open "$parfit_file"
+#open "$parfit_file"
 export parfit_file
 
 ## In directory 'Scripts', can run log_to_textable.ipynb to put an xspec log

@@ -339,6 +339,8 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
 
     fig = plt.figure(figsize=(10, 12), tight_layout=True, dpi=300)
     i=1
+    # print np.shape(var_pars)
+
     for param in var_pars:
 
         param_max = -1
@@ -362,7 +364,14 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
                 marker='.', ms=10, mec=colours[i-1], mfc=colours[i-1],
                 ecolor=colours[i-1], elinewidth=2, capsize=0)
 
-        if param.funcfit is not None:
+        # print np.shape(param.value)
+        # print np.shape(param.neg_err)
+        # print np.shape(param.pos_err)
+        # print np.shape(phase)
+
+        # print param.funcfit
+
+        if param.funcfit is not None and param.funcfit is not np.nan:
             # rect = patches.Rectangle((param_max-param.phase_err, ymin),
             #         2*param.phase_err, ymax-ymin, color='pink', ec="none",
             #         alpha=0.5)
@@ -533,6 +542,7 @@ def get_phase(parameter, num_spectra, quiet):
 
     return parameter
 
+
 def write_varpars(varying_params, fitfunc_file, num_spec=24):
     """
     NOT DOING THIS ANYMORE. Need to keep all segments so I can compute the
@@ -557,6 +567,7 @@ def write_varpars(varying_params, fitfunc_file, num_spec=24):
     # print np.shape(to_save)
 
     np.savetxt(varpar_fits_file, to_save, fmt='%.6e', delimiter='    ')
+
 
 def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
     """
@@ -591,6 +602,7 @@ def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
         # print "%s %s phase: %.4f +- %.4f" % (parameter.mod_name, \
         #         parameter.par_name, parameter.phase, parameter.phase_err)
     return var_pars
+
 
 ################################################################################
 def main(log_file, mod_string="", write_func="", quiet=False):
@@ -639,10 +651,13 @@ def main(log_file, mod_string="", write_func="", quiet=False):
             for component in mod_components:
                 if component.varying:
                     # print component.best_fit
-                    out.write("[%.4e,%.4e,%.4e,%.4e,%.4e]    " % \
-                            (component.best_fit[0], component.best_fit[1], \
-                             component.best_fit[2], component.best_fit[3], \
-                             component.best_fit[4]))
+                    try:
+                        out.write("[%.4e,%.4e,%.4e,%.4e,%.4e]    " % \
+                                (component.best_fit[0], component.best_fit[1], \
+                                 component.best_fit[2], component.best_fit[3], \
+                                 component.best_fit[4]))
+                    except TypeError:
+                        out.write("[nan,nan,nan,nan,nan]    ")
                 else:
                     out.write("%.4e    " % component.value[0])
             out.write("\n")

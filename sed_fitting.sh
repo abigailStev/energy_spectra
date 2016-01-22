@@ -16,7 +16,7 @@
 ## Notes: HEASOFT 6.11.*, bash 3.*, and Python 2.7.* (with supporting libraries) 
 ## 		  must be installed in order to run this script. 
 ##
-## Written by Abigail Stevens, A.L.Stevens at uva.nl, 2015
+## Written by Abigail Stevens <A.L.Stevens at uva.nl> 2015-2016
 ##
 ################################################################################
 
@@ -56,15 +56,21 @@ rsp_matrix="${prefix}_PCU2.rsp"
 out_name="${prefix}_${day}_t${dt}_${numsec}sec_adj"
 
 spec_type=0  # 0 for mean+ccf, 1 for ccf, 2 for mean
+mcmc_flag=0  # 0 for no, 1 for yes
 
-#fit_specifier="1BB-FS-G-Tin"
-#fit_specifier="1BB-FS-G"
+fit_specifier="1BB-FS-G-NE"
 #fit_specifier="pBB-FS-Tin-G"
-fit_specifier="2BB-FS-G-kT"
-fit_specifier+="-fzs-fzNbb"
+#fit_specifier="2BB-FS-G-Nbb"
+#fit_specifier="2BB-FS-G-kT"
+#fit_specifier+="-fzs-fzNbb"
 #fit_specifier+="-fzs"
 #fit_specifier+="-fzNbb"
-#fit_specifier+="-wMCMC"
+#fit_specifier+="-fzTin"
+
+if (( mcmc_flag == 1 )); then
+    fit_specifier+="-wMCMC"
+fi
+
 export fit_specifier
 
 xspec_script="$out_dir/${prefix}_${day}_${fit_specifier}_xspec.xcm"
@@ -72,7 +78,8 @@ xspec_log="${prefix}_${day}_${fit_specifier}_xspec.log"
 ratio_plot="${prefix}_${day}_${fit_specifier}_ratio"
 first_plot="${prefix}_${day}_${fit_specifier}_firstspec"
 spectrum_plot="${prefix}_${day}_${fit_specifier}_allspectra"
-tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/ensp_models.txt"
+tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/spec_models_1BB.txt"
+parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_funcfit.txt"
 
 ccf_file="$in_dir/out_ccf/${prefix}/${out_name}.fits"
 if (( $testing==1 )); then
@@ -87,6 +94,7 @@ plot_ext="eps"
 
 if [ ! -d "$out_dir" ]; then mkdir -p "$out_dir"; fi
 if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
+if [ ! -e "$parfit_file" ]; then touch "$parfit_file"; fi
 
 obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_file', 1, 'EXPOSURE')")
 #echo "$obs_time"
@@ -105,10 +113,13 @@ cd "$out_dir"
 #for (( tbin=6; tbin<=30; tbin++ )); do
 
 n_spectra=$(( 8205-8182+1 ))
+#n_spectra=47
 #echo "$n_spectra"
 export n_spectra
 
 for (( timebin=8182; timebin<=8205; timebin++ )); do
+#for (( timebin=8182; timebin<=8228; timebin++ )); do
+
     if (( timebin>=8192 )); then
         tbin=$((timebin-8192))
     else
@@ -169,26 +180,30 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 ##
 #	mod_vals+="& & & & & & & & & "  ##  all tied
 #	varpar=" - "
-#	mod_vals+="& & & 0.2 & & & & & & "  ## FracSctr
-#	varpar="\\texttt{simpler} FracSctr"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & & & & & & & " ## Gamma
 #	varpar="\\texttt{simpler} Gamma"
+#	mod_vals+="& & & 0.2 & & & & & & "  ## FracSctr
+#	varpar="\\texttt{simpler} FracSctr"
 #	mod_vals+="& & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## Tin
-#	varpar="\\texttt{diskbb} T\$_{\\text{in}}"
+#	varpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
 #	mod_vals+="& & & & & & 3000 & & & " ##  norm(BB)
 #	varpar="\\texttt{diskbb} norm"
 #	mod_vals+="& & & & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## lineE
 #	varpar="\\texttt{gauss} LineE"
+#	mod_vals+="& & & & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & " ## sigma
+#	varpar="\\texttt{gauss} sigma"
 #	mod_vals+="& & & & & & & & & 0.01"  ## norm(E)
 #	varpar="\\texttt{gauss} norm"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & & " ## FracSctr and Gamma
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
 #	mod_vals+="& & & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## FracSctr and Tin
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskbb} T\$_{\\text{in}}"
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskbb} T\$_{\\text{in}}\$"
 #	mod_vals+="& & & 0.2 & & & 3000 & & & " ## FracSctr and norm(BB)
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskbb} norm"
 #	mod_vals+="& & & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr and lineE
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
+#	mod_vals+="& & & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & " ## FracSctr and sigma
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} sigma"
 #	mod_vals+="& & & 0.2 & & & & & & 0.01"  ## FracSctr and norm(E)
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & "  ## FracSctr, Gamma, Tin
@@ -197,14 +212,24 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} norm"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr, Gamma, lineE
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} LineE"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & & 0.01"  ## FracSctr, Gamma, norm(E)
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm"
+#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & "  ## FracSctr, Gamma, sigma
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} sigma"
+ 	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & & 0.01"  ## FracSctr, Gamma, norm(E)
+	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm"
+#    mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & 3000 & & & "  ## FracSctr, Gamma, Tin, norm(BB)
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$, \\texttt{diskbb} norm"
+#    mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & 6.4 0.005 5.5 5.5 7.0 7.0 & & "  ## FracSctr, Gamma, Tin, lineE
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$, \\texttt{gauss} LineE"
+#    mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & 0.8 0.002 0.3 0.3 1.0 1.0 & "  ## FracSctr, Gamma, Tin, lineE
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$, \\texttt{gauss} sigma"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & 0.01 "  ## Gamma, FracSctr, norm(E), Tin
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{diskbb} T\$_{\\text{in}}\$"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & 3000 & & & "  ## Gamma, FracSctr, norm(E), and norm(BB)
+#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & 3000 & & & 0.1 "  ## Gamma, FracSctr, norm(E), and norm(BB)
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{diskbb} norm"
 #	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & 0.01 " ## FracSctr, Gamma, norm(E), lineE
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{gauss} LineE"
+#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & 0.01 " ## FracSctr, Gamma, norm(E), lineE
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{gauss} sigma"
 
 ##
 ## For phabs*(simpl*const*diskbb+diskbb+bbodyrad+gauss)
@@ -223,35 +248,37 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 ##
 #	mod_vals+=" &  &  &     &  & &  &  &  &  & &  "  ## All tied
 #	varpar=" - "
-#	mod_vals+=" &  &  & 0.2 &  & &  &  &  &  & &   "   ## FracSctr
-#	varpar="\\texttt{simpler} FracSctr"
 #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & &  & &  &  &  &  & &  "  ## Gamma
 #	varpar="\\texttt{simpler} Gamma"
+#	mod_vals+=" &  &  & 0.2 &  & &  &  &  &  & &   "   ## FracSctr
+#	varpar="\\texttt{simpler} FracSctr"
 #	mod_vals+=" &  &  &  &  & &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## bb kT
 #	varpar="\\texttt{bbodyrad} kT"
 #	mod_vals+=" &  & &  &  & &  &  & 400 &  & &  "  ## bb norm
 #	varpar="\\texttt{bbodyrad} norm"
 #	mod_vals+=" &  & &  &  & &  &  &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## line E
 #	varpar="\\texttt{gauss} LineE"
+#	mod_vals+=" &  & &  &  & &  &  &  &  & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## sigma
+#	varpar="\\texttt{gauss} sigma"
 #    mod_vals+=" &  & &  &  & &  &  &  & &  & 0.01 "  ## E norm
 #	varpar="\\texttt{gauss} norm"
 #    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  &  &  & &  "  ## FracSctr and Gamma
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
-#	mod_vals+=" &  &  & 0.2 &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  &  &  & & " ## FracSctr and diskbb Tin
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskbb} T\$_{\\text{in}}\$"
 #	mod_vals+=" &  &  & 0.2 &  & &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## FracSctr and bb kT
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT"
 #	mod_vals+=" &  &  & 0.2 &  & &  &  & 2500 &  & &  "  ## FracSctr and bb norm
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} norm"
 #    mod_vals+=" &  &  & 0.2 &  & &  &  & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## FracSctr and line E
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
+#    mod_vals+=" &  &  & 0.2 &  & &  &  & & & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## FracSctr and sigma
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} sigma"
 #	mod_vals+=" &  &  & 0.2 &  & &  &  & &  & & 0.01 "  ## FracSctr and E norm
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
 #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  & .6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## Gamma and bb kT
 #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  &  & 2500 &  & &  "  ## Gamma and bb norm
-	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## Gamma and FracSctr and bb kT
-    varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{simpler} Gamma"
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  & 2000 &  & &  "  ## Gamma and FracSctr and bb norm
+#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## FracSctr and Gamma and bb kT
+#    varpar="\\texttt{simpler} FracSctr,  \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT"
+#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  & 2500 &  & &  "  ## FracSctr and Gamma and bb norm
 #    varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} norm "
 #	mod_vals+=" &  & & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## FracSctr and bb kT and bb norm
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{bbodyrad} norm"
@@ -261,11 +288,18 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{gauss} norm"
 #    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & &  &  & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## FracSctr and Gamma and line E
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} LineE"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & &  &  & & & 0.8 0.005 0.4 0.4 1.0 1.0 &  "  ## FracSctr and Gamma and sigma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} Sigma"
+#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & &  &  & & & 0.7 .005 0.1 0.1 1.0 1.0  &  "  ## FracSctr and Gamma and sigma
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} sigma"
 #	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & &  &  & &  & & 0.01 "  ## FracSctr and Gamma and E norm
 #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 20000 &  & &  "  ## Gamma and FracSctr and bb kT and bb norm
+#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## Gamma and FracSctr and bb kT and bb norm
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{bbodyrad} norm"
+#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Gamma and FracSctr and bb kT and line E
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{gauss} LineE"
+#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## Gamma and FracSctr and bb kT and sigma
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{gauss} sigma"
+#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & & & 0.01 "  ## Gamma and FracSctr and bb kT and E norm
+#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{gauss} norm"
 
 
 
@@ -357,8 +391,8 @@ export n_params
 ################################################################################
 mcmc_file="${prefix}_${day}_${fit_specifier}_MCMC.fits"
 if [ -e "$xspec_log" ]; then rm "$xspec_log"; fi; touch "$xspec_log"
-#if [ -e "${out_dir}/$mcmc_file" ]; then rm "${out_dir}/$mcmc_file"; fi;
-fzpar=" "
+if [ -e "${out_dir}/$mcmc_file" ]; then rm "${out_dir}/$mcmc_file"; fi;
+fzpar=" - "
 
 ########################################
 ## Writing the rest of the xspec script
@@ -377,64 +411,62 @@ echo "abund wilm" >> $xspec_script
 ##
 ## GX339-4 spectral model #1:  simpler * diskbb + gauss
 ##
-#model_string="phabs*(simpler*diskbb+gauss)"
-#echo "mod ${model_string} $mod_vals" >> $xspec_script
-#echo "newpar 1 0.6" >> $xspec_script ## From Reynolds and Miller 2013
-#echo "freeze 1" >> $xspec_script
-#echo "newpar 2 2.6 0.005 2.0 2.0 3.1 3.1" >> $xspec_script
-#echo "newpar 3 0.2" >> $xspec_script
-#echo "newpar 4 1" >> $xspec_script
-#echo "freeze 4" >> $xspec_script
-#echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
-##echo "newpar 5 0.830878" >> $xspec_script
-##echo "freeze 5" >> $xspec_script
-##fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
-#echo "newpar 6 2505.72" >> $xspec_script
+model_string="phabs*(simpler*diskbb+gauss)"
+echo "mod ${model_string} $mod_vals" >> $xspec_script
+echo "newpar 1 0.6 -0.1" >> $xspec_script ## From Reynolds and Miller 2013
+echo "newpar 2 2.6 0.005 2.0 2.0 3.1 3.1" >> $xspec_script
+echo "newpar 3 0.2" >> $xspec_script
+echo "newpar 4 1" >> $xspec_script
+echo "freeze 4" >> $xspec_script
+echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
+#echo "newpar 5 0.830878" >> $xspec_script
+#echo "freeze 5" >> $xspec_script
+#fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
+echo "newpar 6 2505.72" >> $xspec_script
 #echo "freeze 6" >> $xspec_script
-#fzpar="\\texttt{diskbb} norm=2505.72"
-#echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-##echo "newpar 8 0.5 .005 0.1 0.1 0.8 0.8" >> $xspec_script
+#fzpar="\\texttt{diskbb} norm\$\\,=2505.72\$"
+echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
+echo "newpar 8 0.8 .005 0.1 0.1 1.0 1.0" >> $xspec_script
 #echo "newpar 8 0.97" >> $xspec_script  ## Value from steppar on mean spectrum
 #echo "freeze 8" >> $xspec_script
-#fzpar+="\\texttt{gauss} sigma=0.97 "
-#echo "newpar 9 1.0E-02" >> $xspec_script
+#fzpar+=", \\texttt{gauss} \$\\sigma = 0.97\$ "
+echo "newpar 9 1.0E-02" >> $xspec_script
 
 ##
 ## GX339-4 spectral model #2:  simpler * diskbb + bbodyrad + gauss
 ##
-model_string="phabs*(simpler*diskbb+bbodyrad+gauss)"
-echo "mod ${model_string} $mod_vals" >> $xspec_script
-echo "newpar 1 0.6" >> $xspec_script
-echo "freeze 1" >> $xspec_script
-echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
-echo "newpar 3 0.2" >> $xspec_script
-echo "newpar 4 1" >> $xspec_script
-echo "freeze 4" >> $xspec_script
-echo "newpar 5 0.83 0.002 0.6 0.6 1.0 1.0" >> $xspec_script
-##echo "newpar 5 0.955420" >> $xspec_script
-#echo "newpar 5 0.830759333333" >> $xspec_script
-#echo "freeze 5" >> $xspec_script
-#fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$=0.830759333333"
-#echo "newpar 6 3214.06" >> $xspec_script
-echo "newpar 6 2500" >> $xspec_script
-#echo "freeze 6" >> $xspec_script
-#fzpar="\\texttt{diskbb} norm"
-echo "newpar 7 0.6 0.002 0.01 0.01 1.0 1.0" >> $xspec_script
-#echo "newpar 7 0.537252" >> $xspec_script
-#echo "freeze 7" >> $xspec_script
-#fzpar="\\texttt{bbodyrad} kT"
-#echo "newpar 8 1000" >> $xspec_script
-#echo "newpar 8 1.28841E+04" >> $xspec_script
-echo "newpar 8 597.299" >> $xspec_script
-echo "freeze 8" >> $xspec_script
-fzpar="\\texttt{bbodyrad} norm = 1.28841E+04"
-echo "newpar 9 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-#echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script  ## Value from steppar on mean spectrum
-echo "newpar 10 0.82" >> $xspec_script  ## Value from steppar on mean spectrum
-#echo "newpar 10 0.56" >> $xspec_script  ## Value from steppar on mean spectrum
-echo "freeze 10" >> $xspec_script
-fzpar+=" \\texttt{gauss} sigma=0.82"
-echo "newpar 11 0.01" >> $xspec_script
+#model_string="phabs*(simpler*diskbb+bbodyrad+gauss)"
+#echo "mod ${model_string} $mod_vals" >> $xspec_script
+#echo "newpar 1 0.6" >> $xspec_script
+#echo "freeze 1" >> $xspec_script
+#echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+#echo "newpar 3 0.2" >> $xspec_script
+#echo "newpar 4 1" >> $xspec_script
+#echo "freeze 4" >> $xspec_script
+#echo "newpar 5 0.83 0.002 0.6 0.6 1.0 1.0" >> $xspec_script
+###echo "newpar 5 0.955420" >> $xspec_script
+##echo "newpar 5 0.830759333333" >> $xspec_script
+##echo "freeze 5" >> $xspec_script
+##fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$=0.830759333333"
+#echo "newpar 6 2500" >> $xspec_script
+##echo "freeze 6" >> $xspec_script
+##fzpar="\\texttt{diskbb} norm = 2505.72"
+#echo "newpar 7 0.6 0.002 0.1 0.1 1.0 1.0" >> $xspec_script
+##echo "newpar 7 0.537252" >> $xspec_script
+##echo "freeze 7" >> $xspec_script
+##fzpar="\\texttt{bbodyrad} kT"
+##echo "newpar 8 600 5 50 50 1000 1000" >> $xspec_script
+##echo "newpar 8 1000" >> $xspec_script
+#echo "newpar 8 8857.68" >> $xspec_script
+#echo "freeze 8" >> $xspec_script
+#fzpar="\\texttt{bbodyrad} norm\$\\,=8857.68\$"
+#echo "newpar 9 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
+##echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script  ## Value from steppar on mean spectrum
+#echo "newpar 10 0.82" >> $xspec_script  ## Value from steppar on mean spectrum
+##echo "newpar 10 0.56" >> $xspec_script  ## Value from steppar on mean spectrum
+#echo "freeze 10" >> $xspec_script
+#fzpar+=", \\texttt{gauss} \$\\sigma=0.82\$"
+#echo "newpar 11 0.01" >> $xspec_script
 
 ##
 ## FOR GX339-4 2010 outburst, using diskpbb
@@ -622,16 +654,20 @@ echo "fit 1000" >> $xspec_script
 ####################################################
 ## Uncomment the following to do MCMC error finding
 ####################################################
-#echo "chain type gw " >> $xspec_script
-#echo "chain burn 2000" >> $xspec_script
-#echo "chain walkers 1000" >> $xspec_script
-#echo "chain length 100000" >> $xspec_script
-#echo "chain run $mcmc_file">> $xspec_script
-#echo "error maximum 10000. 2.706 1-216" >> $xspec_script
-##echo "error maximum 10000. 2.706 1-240" >> $xspec_script
-##echo "error maximum 10000. 2.706 1-264" >> $xspec_script
-##echo "error maximum 10000. 2.706 1-288" >> $xspec_script
-##echo "error 7 18" >> $xspec_script
+if (( mcmc_flag == 1 )); then
+    total_par=$((n_params*n_spectra))
+    echo "total pars: $total_par"
+    echo "chain type gw " >> $xspec_script
+    echo "chain burn 2000" >> $xspec_script
+    echo "chain walkers 1000" >> $xspec_script
+    echo "chain length 100000" >> $xspec_script
+    echo "chain run $mcmc_file">> $xspec_script
+    total_par=$((n_params*n_spectra))
+    echo "total pars: $total_par"
+    #echo "error maximum 10000. 2.706 1-$total_par" >> $xspec_script
+    echo "error maximum 10000. 1 1-423" >> $xspec_script
+fi
+
 
 ## Getting the chisquared and degrees of freedom from the output
 echo "tclout stat" >> $xspec_script
@@ -675,14 +711,12 @@ dof=$(tail -n 1 dof.txt)
 echo CHISQUARED = "$chis"
 echo DOF = "$dof"
 #
-echo " & \\texttt{$model_string} & \$$chis / $dof\$ & $varpar & $fzpar & " >> $tex_tab_file
+#echo " & \\texttt{$model_string} & \$$chis / $dof\$ & $varpar & " >> $tex_tab_file
+echo " & \\texttt{$model_string} & \$$chis / $dof\$ & $varpar & $fzpar \\\\ " >> $tex_tab_file
 ## The lag chisquared, \ref, and \\ are added in fake_qpo_spectra.py
 echo ""
 echo "Finished running sed_fitting.sh"
 cd ..
-
-parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_sines.txt"
-if [ ! -e "$parfit_file" ]; then touch "$parfit_file"; fi
 
 echo "python $exe_dir/multifit_plots.py $out_dir/$xspec_log" \
         --mod_string "\"${model_string}\"" \

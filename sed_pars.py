@@ -5,7 +5,7 @@ Classes used in the 'spectral' part of spectral-timing analysis.
 import numpy as np
 
 __author__ = "Abigail Stevens <A.L.Stevens at uva.nl>"
-__year__ = "2015"
+__year__ = "2015-2016"
 
 class Parameter(object):
     def __init__(self, mod_name=None, label=None, par_name=None):
@@ -58,9 +58,9 @@ class Phabs(object):
 class Simpl(object):
     def __init__(self):
         self.mod_name = "simpl "
-        self.Gamma = Parameter(self.mod_name, label="simpl: Gamma",
+        self.Gamma = Parameter(self.mod_name, label="PL photon index",
                 par_name="Gamma")
-        self.FracSctr = Parameter(self.mod_name, label="simpl: FracSctr",
+        self.FracSctr = Parameter(self.mod_name, label="PL normalization",
                 par_name="FracSctr")
         self.UpScOnly = Parameter(self.mod_name, label="simpl: UpScOnly",
                 par_name="UpScOnly")
@@ -124,7 +124,7 @@ class Diskbb(object):
         #         label=r"diskbb: T$_{in}$ (keV)", par_name="Tin")
         # self.norm = Parameter(self.mod_name, label="diskbb: norm",
         #         par_name="norm")
-        self.Tin = Parameter(self.mod_name, label="BB temperature", \
+        self.Tin = Parameter(self.mod_name, label="BB temperature (keV)", \
                 par_name="Tin")
         self.norm = Parameter(self.mod_name, label="BB normalization",
                 par_name="norm")
@@ -155,9 +155,9 @@ class Diskpbb(object):
 class Bbodyrad(object):
     def __init__(self):
         self.mod_name = "bbodyrad"
-        self.kT = Parameter(self.mod_name, label="bbodyrad: kT (keV)",
+        self.kT = Parameter(self.mod_name, label="BB temperature (keV)",
                 par_name="kT")
-        self.norm = Parameter(self.mod_name, label="bbodyrad: norm",
+        self.norm = Parameter(self.mod_name, label="BB normalization",
                 par_name="norm")
 
     def __str__(self):
@@ -170,11 +170,11 @@ class Bbodyrad(object):
 class Gaussian(object):
     def __init__(self):
         self.mod_name = "gaussian"
-        self.LineE = Parameter(self.mod_name, label="gaussian: LineE (keV)",
+        self.LineE = Parameter(self.mod_name, label="Line energy (keV)",
                 par_name="LineE")
-        self.Sigma = Parameter(self.mod_name, label="gaussian: Sigma (keV)",
+        self.Sigma = Parameter(self.mod_name, label="Equivalent width (keV)",
                 par_name="Sigma")
-        self.norm = Parameter(self.mod_name, label="gaussian: norm",
+        self.norm = Parameter(self.mod_name, label="Line normalization",
                 par_name="norm")
 
     def __str__(self):

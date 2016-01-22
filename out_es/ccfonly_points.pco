@@ -22,10 +22,10 @@ lw 4 on 4
 lw 4 on 8
 lw 4 on 12
 lw 4 on 16
-co 15 on 4
-co 15 on 8
-co 15 on 12
-co 15 on 16
+co 1 on 4
+co 1 on 8
+co 1 on 12
+co 1 on 16
 ls 2 on 4
 ls 2 on 8
 ls 2 on 12

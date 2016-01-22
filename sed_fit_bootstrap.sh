@@ -17,7 +17,7 @@
 ## Notes: HEASOFT 6.14.*, bash 3.*, and Python 2.7.* (with supporting libraries)
 ## 		  must be installed in order to run this script. 
 ##
-## Author: Abigail Stevens <A.L.Stevens at uva.nl> 2015
+## Author: Abigail Stevens <A.L.Stevens at uva.nl> 2015-2016
 ##
 ################################################################################
 
@@ -58,10 +58,9 @@ spec_type=0  # 0 for mean+ccf, 1 for ccf, 2 for mean
 #fit_specifier+="1BB-FS-G"
 #fit_specifier+="pBB-FS-Tin-G"
 fit_specifier+="2BB-FS-G-kT"
-fit_specifier+="-fzs-fzNbb"
+fit_specifier+="-fzs-fzNbb8857"
 #fit_specifier+="-fzs"
 #fit_specifier+="-fzNbb"
-#fit_specifier+="-wMCMC"
 export fit_specifier
 
 tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/textab_${fit_specifier}_boot.txt"
@@ -97,6 +96,7 @@ obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_fil
 ## Looping through the bootstrap iterations
 ############################################
 for (( b=1; b<=boot_num; b++ )); do
+#for (( b=5295; b<=5300; b++ )); do
 	if (( b % 50 == 0 )); then echo -e "\t $b"; fi
 
 	boot_fit_specifier="${fit_specifier}_b-${b}"
@@ -187,6 +187,7 @@ for (( b=1; b<=boot_num; b++ )); do
         ## Writing file names to xspec script
         echo "data $i:$i $out_end.pha" >> $xspec_script
 
+
         #######################################################################
         ## Go through and uncomment the two lines for the untied parameter
         ## combination you want. First line is what's fed into XSPEC
@@ -261,42 +262,6 @@ for (( b=1; b<=boot_num; b++ )); do
     #    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 20000 &  & &  "  ## Gamma and FracSctr and bb kT and bb norm
 
 
-        ##
-        ## For phabs*(simpler*diskpbb+gauss)
-        ##
-    #	mod_vals+=" &  &  &  &  & & & & & &  "  ## All tied
-    #    varpar=" - "
-    #    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 & & & & &  &  &  "  ## FracSctr and Gamma
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
-    #	mod_vals+=" & &  & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & &  & & " ## FracSctr and diskpbb Tin
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$"
-    #	mod_vals+=" &  &  & 0.2 & & & 0.75 & & & & " ## FracSctr and diskpbb p
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} p"
-    #	mod_vals+=" &  &  & 0.2 & &  & & 2000 &  & & " ## FracSctr and diskpbb norm
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} norm"
-    #    mod_vals+=" &  &  & 0.2 & & & &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## FracSctr and line E
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
-    #	mod_vals+=" &  &  & 0.2 & & & &  &  & & 0.01 "  ## FracSctr and E norm
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
-    #	mod_vals+=" & & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & &  & & " ## FracSctr and diskpbb Tin and Gamma
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{simpler} Gamma"
-    #    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & .75 & &  & & " ## FracSctr and diskpbb Tin and diskpbb p
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} p"
-    #    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 &  & & " ## FracSctr and diskpbb Tin and diskpbb norm
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm"
-    #    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr and diskpbb Tin and line E
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{gauss} LineE"
-    #    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & & & & 0.01" ## FracSctr and diskpbb Tin and E norm
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{gauss} norm"
-    #    mod_vals+=" & & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 &  & & " ## FracSctr and diskpbb Tin and diskpbb norm and Gamma
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{simpler} Gamma"
-    #    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & .75 & 2000 & & & " ## FracSctr and diskpbb Tin and diskpbb norm and diskpbb p
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{diskpbb} p"
-    #    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr and diskpbb Tin and diskpbb norm and line E
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{gauss} LineE"
-    #	mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 & & & 0.01 " ## FracSctr and diskpbb Tin and diskpbb norm and E norm
-    #	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{gauss} norm"
-
         ((i+=1))
     done
     ((i-=1))
@@ -305,10 +270,10 @@ for (( b=1; b<=boot_num; b++ )); do
 #    echo "n params: $n_params"
     export n_params
 
+#    n_params=11
+
     ############################################################################
-    mcmc_file="${prefix}_${day}_${boot_fit_specifier}_MCMC.fits"
     if [ -e "$xspec_log" ]; then rm "$xspec_log"; fi; touch "$xspec_log"
-    #if [ -e "${out_dir}/$mcmc_file" ]; then rm "${out_dir}/$mcmc_file"; fi;
     fzpar=" "
 
     ########################################
@@ -362,52 +327,18 @@ for (( b=1; b<=boot_num; b++ )); do
     echo "newpar 4 1" >> $xspec_script
     echo "freeze 4" >> $xspec_script
     echo "newpar 5 0.83 0.002 0.6 0.6 1.0 1.0" >> $xspec_script
-    ##echo "newpar 5 0.955420" >> $xspec_script
-    #echo "newpar 5 0.830759333333" >> $xspec_script
-    #echo "freeze 5" >> $xspec_script
-    #fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$=0.830759333333"
-    #echo "newpar 6 3214.06" >> $xspec_script
     echo "newpar 6 2500" >> $xspec_script
-    #echo "freeze 6" >> $xspec_script
-    #fzpar="\\texttt{diskbb} norm"
     echo "newpar 7 0.6 0.002 0.01 0.01 1.0 1.0" >> $xspec_script
-    #echo "newpar 7 0.537252" >> $xspec_script
-    #echo "freeze 7" >> $xspec_script
-    #fzpar="\\texttt{bbodyrad} kT"
-    #echo "newpar 8 1000" >> $xspec_script
-    #echo "newpar 8 1.28841E+04" >> $xspec_script
-    echo "newpar 8 597.299" >> $xspec_script
+    echo "newpar 8 8857.68" >> $xspec_script
     echo "freeze 8" >> $xspec_script
-    fzpar="\\texttt{bbodyrad} norm = 1.28841E+04"
+    fzpar="\\texttt{bbodyrad} norm = 8857.68"
     echo "newpar 9 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
     #echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script  ## Value from steppar on mean spectrum
     echo "newpar 10 0.82" >> $xspec_script  ## Value from steppar on mean spectrum
     #echo "newpar 10 0.56" >> $xspec_script  ## Value from steppar on mean spectrum
     echo "freeze 10" >> $xspec_script
-    fzpar+=" \\texttt{gauss} sigma=0.82"
+    fzpar+=", \\texttt{gauss} sigma=0.82"
     echo "newpar 11 0.01" >> $xspec_script
-
-    ##
-    ## phabs*(simpler*diskpbb+gauss)
-    ##
-    #model_string="phabs*(simpler*diskpbb+gauss)"
-    #echo "mod ${model_string} $mod_vals" >> $xspec_script
-    #echo "newpar 1 0.6" >> $xspec_script
-    #echo "freeze 1" >> $xspec_script
-    #echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
-    #echo "newpar 3 0.2" >> $xspec_script
-    #echo "newpar 4 1" >> $xspec_script
-    #echo "freeze 4" >> $xspec_script
-    ##echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
-    ##echo "newpar 5 0.744958" >> $xspec_script
-    #echo "newpar 5 0.838785" >> $xspec_script
-    #echo "freeze 5" >> $xspec_script
-    #echo "newpar 6 0.75" >> $xspec_script
-    ##echo "newpar 7 3214.06" >> $xspec_script
-    ##echo "freeze 7" >> $xspec_script
-    #echo "newpar 8 6.5 0.002 6.4 6.4 6.8 6.8" >> $xspec_script
-    #echo "newpar 9 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script
-    #echo "newpar 10 0.01" >> $xspec_script
 
     ##
     ## The rest of the normal commands, and telling it to fit!
@@ -416,19 +347,6 @@ for (( b=1; b<=boot_num; b++ )); do
     echo "query yes" >> $xspec_script
     echo "chatter 4" >> $xspec_script
     echo "fit 1000" >> $xspec_script
-
-    ##
-    ## Uncomment the following to do MCMC error finding
-    ##
-    #echo "chain type gw " >> $xspec_script
-    #echo "chain burn 2000" >> $xspec_script
-    #echo "chain walkers 1000" >> $xspec_script
-    #echo "chain length 100000" >> $xspec_script
-    #echo "chain run $mcmc_file">> $xspec_script
-    #echo "error maximum 10000. 2.706 1-216" >> $xspec_script
-    ##echo "error maximum 10000. 2.706 1-240" >> $xspec_script
-    ##echo "error maximum 10000. 2.706 1-264" >> $xspec_script
-    ##echo "error maximum 10000. 2.706 1-288" >> $xspec_script
 
     ## Getting the chisquared and degrees of freedom from the output
     echo "tclout stat" >> $xspec_script

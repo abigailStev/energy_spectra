@@ -12,7 +12,7 @@
 ## Notes: HEASOFT 6.11.*, bash 3.*, and Python 2.7.* (with supporting libraries) 
 ## 		  must be installed in order to run this script. 
 ##
-## Written by Abigail Stevens, A.L.Stevens at uva.nl, 2014-2015
+## Written by Abigail Stevens, A.L.Stevens at uva.nl, 2014-2016
 ##
 ################################################################################
 
@@ -105,8 +105,6 @@ else
 			"exist."
 fi
 
-exit
-
 if [ -e "$rsp_matrix" ] && [ -e "${out_end}.${tab_ext}" ] && \
 	[ -e "$bkgd_spec" ]; then
 
@@ -146,14 +144,14 @@ echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
 echo "mod pow & 0 " >> $xspec_script
 echo "iplot eeufspec" >> $xspec_script
-echo "@meanonly_points.pco 0.15 9 $spectrum_plot " >> $xspec_script
+echo "@meanonly_points.pco 0.4 7 $spectrum_plot " >> $xspec_script
 #echo "@meanonly_points.pco 0.2 0.7 $spectrum_plot " >> $xspec_script
 
 echo "exit" >> $xspec_script
 
 cd "$out_dir"
-#xspec < "$xspec_script" > $dump_file
-# if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
+xspec < "$xspec_script" > $dump_file
+if [ -e "$spectrum_plot.eps" ]; then open "$spectrum_plot.eps"; fi
 
 ################################################################################
 
@@ -174,7 +172,8 @@ i=1
 
 #for tbin in {6,13,19,24}; do
 #for tbin in {20,25,30,35}; do
-for tbin in {8187,1,6,14}; do
+#for tbin in {8187,1,6,14}; do
+for tbin in {8182,8187,1,6}; do
 
 	out_end="${out_root}_ccfonly_${tbin}bin"
 
@@ -268,7 +267,8 @@ i=1
 # for tbin in {24,29,34,41}; do
 #for tbin in {6,13,19,24}; do
 #for tbin in {20,25,30,35}; do
-for tbin in {8187,1,6,14}; do
+#for tbin in {8187,1,6,14}; do
+for tbin in {8182,8187,1,6}; do
 
 	out_end="${out_root}_ccfwmean_${tbin}bin"
 
@@ -329,7 +329,7 @@ echo "xsect vern" >> $xspec_script
 echo "abund wilm" >> $xspec_script
 echo "mod pow & 0 " >> $xspec_script
 echo "iplot eeufspec" >> $xspec_script
-echo "@ccfwmean_points.pco 0.15 9 $spectrum_plot" >> $xspec_script
+echo "@ccfwmean_points.pco 0.4 7 $spectrum_plot" >> $xspec_script
 #echo "@ccfwmean_points.pco 0.2 0.7 $spectrum_plot" >> $xspec_script
 echo "exit" >> $xspec_script
 

@@ -19,7 +19,7 @@ from datetime import datetime
 import sed_pars
 
 __author__ = "Abigail Stevens <A.L.Stevens at uva.nl>"
-__year__ = "2015"
+__year__ = "2015-2016"
 
 
 ################################################################################
@@ -299,7 +299,7 @@ def read_log_file(log_file, quiet=True):
 
 
 ################################################################################
-def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
+def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
     """
     Making plots of SED parameters vs phase for multiple co-varying parameters.
 
@@ -318,11 +318,16 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
         If True, will not open the plot made. [False]
     """
 
+    # title="phabs$\\times\\,$(simpler*diskbb+gauss)"
+
     font_prop = font_manager.FontProperties(size=18)
     xLocator = MultipleLocator(0.05)  ## loc of minor ticks on x-axis
 
     phase = np.arange(num_spectra) / 23.646776
-    tinybins = np.arange(-0.02, 1.02, 0.01)
+    if num_spectra == 24:
+        tinybins = np.arange(-0.02, 1.02, 0.01)
+    else:
+        tinybins = np.arange(-0.02, 2.02, 0.01)
 
     ## So that the plotted x-value is the MIDDLE of the 'bin', with and error of
     ## the width of the bin.
@@ -390,7 +395,10 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
         ax.set_ylabel(param.label, fontproperties=font_prop)
 
         ax.set_ylim(ymin, ymax)
-        ax.set_xlim(0.0, 1.01)
+        if num_spectra == 24:
+            ax.set_xlim(0.0, 1.01)
+        else:
+            ax.set_xlim(0.0, 2.01)
         y_maj_loc = ax.get_yticks()
         y_min_mult = 0.25 * (y_maj_loc[1] - y_maj_loc[0])
         yLocator = MultipleLocator(y_min_mult)  ## loc of minor ticks on y-axis
@@ -400,11 +408,16 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
         i += 1
 
     ax_list[-1].set_xlabel('Normalized QPO phase', fontproperties=font_prop)
-    ax_list[-1].set_xticks(np.arange(0, 1.05, 0.25))
+    if num_spectra == 24:
+        ax_list[-1].set_xticks(np.arange(0, 1.05, 0.25))
+    else:
+        ax_list[-1].set_xticks(np.arange(0, 2.05, 0.25))
+
     ax_list[-1].xaxis.set_minor_locator(xLocator)
     ax_list[-1].tick_params(axis='x', labelsize=18, bottom=True, top=True, \
                 labelbottom=True, labeltop=False)
 
+    ax_list[0].set_title(r'%s' % title, fontproperties=font_prop)
     fig.subplots_adjust(hspace=0.00)
     # 	plt.show()
     plt.savefig(plot_file)
@@ -412,7 +425,7 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False):
 
     if not quiet:
         subprocess.call(['open', plot_file])
-    #   subprocess.call(['cp', plot_file, "/Users/abigailstevens/Dropbox/Research/CCF_paper1/"])
+    subprocess.call(['cp', plot_file, "/Users/abigailstevens/Dropbox/Research/CCF_paper1/"])
 
 
 ################################################################################
@@ -507,8 +520,8 @@ def get_phase(parameter, num_spectra, quiet):
     # print "P best:", p_best
     best_fit = p_best[0]
 
-    if not quiet:
-        print("\tBest fit: %s" % str(best_fit))
+    # if not quiet:
+    #     print("\tBest fit: %s" % str(best_fit))
 
     # plt.errorbar(t, parameter.value, xerr=None, yerr=parameter.error)
     # plt.plot(t, fit_function(t, best_fit))
@@ -536,13 +549,17 @@ def get_phase(parameter, num_spectra, quiet):
         return parameter
 
     parameter.best_fit = best_fit
-    parameter.funcfit = fit_function(np.arange(-0.02, 1.02, 0.01), best_fit)
+    if num_spectra == 24:
+        parameter.funcfit = fit_function(np.arange(-0.02, 1.02, 0.01), best_fit)
+    else:
+        parameter.funcfit = fit_function(np.arange(-0.02, 2.02, 0.01), best_fit)
     parameter.phase = best_fit[1] / (2.0 * np.pi)
     parameter.phase_err = np.sqrt(cov_matrix[1][1]) / (2.0 * np.pi)
 
     return parameter
 
 
+################################################################################
 def write_varpars(varying_params, fitfunc_file, num_spec=24):
     """
     NOT DOING THIS ANYMORE. Need to keep all segments so I can compute the
@@ -569,6 +586,7 @@ def write_varpars(varying_params, fitfunc_file, num_spec=24):
     np.savetxt(varpar_fits_file, to_save, fmt='%.6e', delimiter='    ')
 
 
+################################################################################
 def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
     """
     Determines which SED parameters are varying with QPO phase, based on the log
@@ -596,6 +614,7 @@ def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
     for component in mod_components:
         if not quiet:
             print component.par_name, "mean:", np.mean(component.value)
+            print "\t", np.min(component.value), np.max(component.value)
         if component.varying:
             component = get_phase(component, n_spectra, quiet)
             var_pars = np.append(var_pars, component)

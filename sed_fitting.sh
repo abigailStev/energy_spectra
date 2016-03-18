@@ -3,9 +3,9 @@
 ################################################################################
 ## 
 ## Bash script for phase-resolved spectroscopy: run energyspec.py to make phase-
-## resolved energy spectra, make an XSPEC SED fitting script, run
+## resolved energy spectra, make an XSPEC spectral fitting script, run
 ## the script, read off fit data from log file with multispec_plots.py, and make
-## plots of SED parameters changing with QPO phase, fit a function to those
+## plots of spectral parameters changing with QPO phase, fit a function to those
 ## parameter variations.
 ##
 ## Example call: source ./sed_fitting.sh GX339-BQPO 64 64 0 150131
@@ -16,7 +16,7 @@
 ## Notes: HEASOFT 6.11.*, bash 3.*, and Python 2.7.* (with supporting libraries) 
 ## 		  must be installed in order to run this script. 
 ##
-## Written by Abigail Stevens <A.L.Stevens at uva.nl> 2015-2016
+## Author: Abigail Stevens <A.L.Stevens at uva.nl> 2015-2016
 ##
 ################################################################################
 
@@ -55,16 +55,15 @@ rsp_matrix="${prefix}_PCU2.rsp"
 #out_name="${prefix}_${day}_t${dt}_${numsec}sec"
 out_name="${prefix}_${day}_t${dt}_${numsec}sec_adj"
 
-spec_type=0  # 0 for mean+ccf, 1 for ccf, 2 for mean
 mcmc_flag=0  # 0 for no, 1 for yes
 
-fit_specifier="1BB-FS-G-NE"
-#fit_specifier="pBB-FS-Tin-G"
-#fit_specifier="2BB-FS-G-Nbb"
+#fit_specifier="3pd-1BB-FS-G-Tin"
+fit_specifier="pBB-FS-G-p"
+#fit_specifier="1BB-FS-G-NE"
 #fit_specifier="2BB-FS-G-kT"
-#fit_specifier+="-fzs-fzNbb"
-#fit_specifier+="-fzs"
-#fit_specifier+="-fzNbb"
+#fit_specifier+="-fzs-fzNbb8857-2"
+fit_specifier+="-fzs"
+fit_specifier+="-fzNbb"
 #fit_specifier+="-fzTin"
 
 if (( mcmc_flag == 1 )); then
@@ -78,7 +77,7 @@ xspec_log="${prefix}_${day}_${fit_specifier}_xspec.log"
 ratio_plot="${prefix}_${day}_${fit_specifier}_ratio"
 first_plot="${prefix}_${day}_${fit_specifier}_firstspec"
 spectrum_plot="${prefix}_${day}_${fit_specifier}_allspectra"
-tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/spec_models_1BB.txt"
+tex_tab_file="$home_dir/Dropbox/Research/CCF_paper1/spec_models_testing.txt"
 parfit_file="$out_dir/${prefix}_${day}_${fit_specifier}_funcfit.txt"
 
 ccf_file="$in_dir/out_ccf/${prefix}/${out_name}.fits"
@@ -93,7 +92,7 @@ plot_ext="eps"
 ################################################################################
 
 if [ ! -d "$out_dir" ]; then mkdir -p "$out_dir"; fi
-if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
+#if [ -e "$xspec_script" ]; then rm "$xspec_script"; fi; touch "$xspec_script"
 if [ ! -e "$parfit_file" ]; then touch "$parfit_file"; fi
 
 obs_time=$(python -c "from tools import get_key_val; print get_key_val('$ccf_file', 1, 'EXPOSURE')")
@@ -113,12 +112,12 @@ cd "$out_dir"
 #for (( tbin=6; tbin<=30; tbin++ )); do
 
 n_spectra=$(( 8205-8182+1 ))
-#n_spectra=47
+#n_spectra=71
 #echo "$n_spectra"
 export n_spectra
 
 for (( timebin=8182; timebin<=8205; timebin++ )); do
-#for (( timebin=8182; timebin<=8228; timebin++ )); do
+#for (( timebin=8159; timebin<=8229; timebin++ )); do
 
     if (( timebin>=8192 )); then
         tbin=$((timebin-8192))
@@ -130,7 +129,7 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
     if [ ! -e "${out_end}.pha" ]; then
         if [ -e "${ccf_file}" ]; then
             python "$exe_dir"/energyspec.py "${ccf_file}" \
-                    "${out_end}.${tab_ext}" -b "$tbin" -s "$spec_type"
+                    "${out_end}.${tab_ext}" -b "$tbin" -s 0
         else
             echo -e "\tERROR: ${ccf_file} does not exist, energyspec.py was NOT run."
         fi
@@ -180,56 +179,56 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 ##
 #	mod_vals+="& & & & & & & & & "  ##  all tied
 #	varpar=" - "
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & & & & & & & " ## Gamma
-#	varpar="\\texttt{simpler} Gamma"
-#	mod_vals+="& & & 0.2 & & & & & & "  ## FracSctr
-#	varpar="\\texttt{simpler} FracSctr"
-#	mod_vals+="& & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## Tin
-#	varpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & & & & & & & " ## Gamma
+#	varpar="\$\\Gamma\$"
+#	mod_vals+="& & & 0.2 & & & & & & "  ## Fscatt
+#	varpar="\$F_{\\text{scatt}}\$"
+#	mod_vals+="& & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## Tdisk
+#	varpar="\$T_{\\text{disk}}\$"
 #	mod_vals+="& & & & & & 3000 & & & " ##  norm(BB)
-#	varpar="\\texttt{diskbb} norm"
-#	mod_vals+="& & & & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## lineE
-#	varpar="\\texttt{gauss} LineE"
+#	varpar="\$N_{\\text{disk}}\$"
+#	mod_vals+="& & & & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## Eline
+#	varpar="\$E_{\\text{line}}\$"
 #	mod_vals+="& & & & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & " ## sigma
-#	varpar="\\texttt{gauss} sigma"
-#	mod_vals+="& & & & & & & & & 0.01"  ## norm(E)
-#	varpar="\\texttt{gauss} norm"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & & " ## FracSctr and Gamma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
-#	mod_vals+="& & & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## FracSctr and Tin
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskbb} T\$_{\\text{in}}\$"
-#	mod_vals+="& & & 0.2 & & & 3000 & & & " ## FracSctr and norm(BB)
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskbb} norm"
-#	mod_vals+="& & & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr and lineE
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
-#	mod_vals+="& & & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & " ## FracSctr and sigma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} sigma"
-#	mod_vals+="& & & 0.2 & & & & & & 0.01"  ## FracSctr and norm(E)
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & "  ## FracSctr, Gamma, Tin
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & 3000 & & & "  ## FracSctr, Gamma, norm(BB)
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} norm"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr, Gamma, lineE
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} LineE"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & "  ## FracSctr, Gamma, sigma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} sigma"
- 	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & & 0.01"  ## FracSctr, Gamma, norm(E)
-	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm"
-#    mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & 3000 & & & "  ## FracSctr, Gamma, Tin, norm(BB)
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$, \\texttt{diskbb} norm"
-#    mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & 6.4 0.005 5.5 5.5 7.0 7.0 & & "  ## FracSctr, Gamma, Tin, lineE
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$, \\texttt{gauss} LineE"
-#    mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & 0.8 0.002 0.3 0.3 1.0 1.0 & "  ## FracSctr, Gamma, Tin, lineE
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{diskbb} T\$_{\\text{in}}\$, \\texttt{gauss} sigma"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & 0.01 "  ## Gamma, FracSctr, norm(E), Tin
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{diskbb} T\$_{\\text{in}}\$"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & 3000 & & & 0.1 "  ## Gamma, FracSctr, norm(E), and norm(BB)
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{diskbb} norm"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & 0.01 " ## FracSctr, Gamma, norm(E), lineE
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{gauss} LineE"
-#	mod_vals+="& & 2.6 0.005 2.0 2.0 3.1 3.1 & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & 0.01 " ## FracSctr, Gamma, norm(E), lineE
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm, \\texttt{gauss} sigma"
+#	varpar="\$\\sigma_{\\text{line}}\$"
+#	mod_vals+="& & & & & & & & & 0.01"  ## Nline
+#	varpar="\$N_{\\text{line}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & & & & " ## Fscatt and Gamma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$"
+#	mod_vals+="& & & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & " ## Fscatt and Tdisk
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{disk}}\$"
+#	mod_vals+="& & & 0.2 & & & 3000 & & & " ## Fscatt and norm(BB)
+#	varpar="\$F_{\\text{scatt}}\$, \$N_{\\text{disk}}\$"
+#	mod_vals+="& & & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## Fscatt and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$E_{\\text{line}}\$"
+#	mod_vals+="& & & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & " ## Fscatt and sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\sigma_{\\text{line}}\$"
+#	mod_vals+="& & & 0.2 & & & & & & 0.01"  ## Fscatt and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$N_{\\text{line}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & "  ## Fscatt, Gamma, Tdisk
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{disk}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & 3000 & & & "  ## Fscatt, Gamma, Ndisk
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{disk}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## Fscatt, Gamma, Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$E_{\\text{line}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & "  ## Fscatt, Gamma, sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$\\sigma_{\\text{line}}\$"
+# 	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & & & & 0.01"  ## Fscatt, Gamma, Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{line}}\$"
+#    mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & 3000 & & & "  ## Fscatt, Gamma, Tdisk, Ndisk
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{disk}}\$, \$N_{\\text{disk}}\$"
+#    mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & 6.4 0.005 5.5 5.5 7.0 7.0 & & "  ## Fscatt, Gamma, Tdisk, Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{disk}}\$, \$E_{\\text{line}}\$"
+#    mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & 0.8 0.002 0.3 0.3 1.0 1.0 & "  ## Fscatt, Gamma, Tdisk, sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{disk}}\$, \$\\sigma_{\\text{line}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & 0.8 0.002 0.3 0.3 1.0 1.0 & & & & 0.01 "  ## Gamma, Fscatt, Tdisk, Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{disk}}\$, \$N_{\\text{line}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & 3000 & & & 0.1 "  ## Gamma, Fscatt, Nline, and Ndisk
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{line}}\$, \$N_{\\text{disk}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & 0.01 " ## Fscatt, Gamma, Nline, Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{line}}\$, \$E_{\\text{line}}\$"
+#	mod_vals+="& & 2.6 0.005 1.0 1.0 3.1 3.1 & 0.2 & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & 0.01 " ## Fscatt, Gamma, Nline, sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{line}}\$, \$\\sigma_{\\text{line}}\$"
 
 ##
 ## For phabs*(simpl*const*diskbb+diskbb+bbodyrad+gauss)
@@ -248,108 +247,129 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 ##
 #	mod_vals+=" &  &  &     &  & &  &  &  &  & &  "  ## All tied
 #	varpar=" - "
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & &  & &  &  &  &  & &  "  ## Gamma
-#	varpar="\\texttt{simpler} Gamma"
-#	mod_vals+=" &  &  & 0.2 &  & &  &  &  &  & &   "   ## FracSctr
-#	varpar="\\texttt{simpler} FracSctr"
-#	mod_vals+=" &  &  &  &  & &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## bb kT
-#	varpar="\\texttt{bbodyrad} kT"
-#	mod_vals+=" &  & &  &  & &  &  & 400 &  & &  "  ## bb norm
-#	varpar="\\texttt{bbodyrad} norm"
-#	mod_vals+=" &  & &  &  & &  &  &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## line E
-#	varpar="\\texttt{gauss} LineE"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & &  & &  &  &  &  & &  "  ## Gamma
+#	varpar="\$\\Gamma\$"
+#	mod_vals+=" &  &  & 0.2 &  & &  &  &  &  & &   "   ## Fscatt
+#	varpar="\$F_{\\text{scatt}}\$"
+#	mod_vals+=" &  &  &  &  & &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## Tbb
+#	varpar="\$T_{\\text{bb}}\$"
+#	mod_vals+=" &  & &  &  & &  &  & 400 &  & &  "  ## Nbb
+#	varpar="\$N_{\\text{bb}}\$"
+#	mod_vals+=" &  & &  &  & &  &  &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Eline
+#	varpar="\$E_{\\text{line}}\$"
 #	mod_vals+=" &  & &  &  & &  &  &  &  & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## sigma
-#	varpar="\\texttt{gauss} sigma"
-#    mod_vals+=" &  & &  &  & &  &  &  & &  & 0.01 "  ## E norm
-#	varpar="\\texttt{gauss} norm"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  &  &  & &  "  ## FracSctr and Gamma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
-#	mod_vals+=" &  &  & 0.2 &  & &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## FracSctr and bb kT
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT"
-#	mod_vals+=" &  &  & 0.2 &  & &  &  & 2500 &  & &  "  ## FracSctr and bb norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} norm"
-#    mod_vals+=" &  &  & 0.2 &  & &  &  & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## FracSctr and line E
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
-#    mod_vals+=" &  &  & 0.2 &  & &  &  & & & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## FracSctr and sigma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} sigma"
-#	mod_vals+=" &  &  & 0.2 &  & &  &  & &  & & 0.01 "  ## FracSctr and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  & .6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## Gamma and bb kT
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 &  &  & &  &  & 2500 &  & &  "  ## Gamma and bb norm
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## FracSctr and Gamma and bb kT
-#    varpar="\\texttt{simpler} FracSctr,  \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT"
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  & 2500 &  & &  "  ## FracSctr and Gamma and bb norm
-#    varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} norm "
-#	mod_vals+=" &  & & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## FracSctr and bb kT and bb norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{bbodyrad} norm"
-#	mod_vals+=" &  & 2.8 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & &  &  &  & & 0.01 "  ## Gamma and FracSctr and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm"
-#	mod_vals+=" &  & & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0  &  &  & & 0.01 "  ## FracSctr and bb kT and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{bbodyrad} kT, \\texttt{gauss} norm"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & &  &  & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## FracSctr and Gamma and line E
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} LineE"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & &  &  & & & 0.7 .005 0.1 0.1 1.0 1.0  &  "  ## FracSctr and Gamma and sigma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} sigma"
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & &  &  & &  & & 0.01 "  ## FracSctr and Gamma and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{gauss} norm"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## Gamma and FracSctr and bb kT and bb norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{bbodyrad} norm"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Gamma and FracSctr and bb kT and line E
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{gauss} LineE"
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## Gamma and FracSctr and bb kT and sigma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{gauss} sigma"
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & & & 0.01 "  ## Gamma and FracSctr and bb kT and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma, \\texttt{bbodyrad} kT, \\texttt{gauss} norm"
+#	varpar="\$\\sigma_{\\text{line}}\$"
+#    mod_vals+=" &  & &  &  & &  &  &  & &  & 0.01 "  ## Nline
+#	varpar="\$N_{\\text{line}}\$"
+#    mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & &  &  &  & &  "  ## Fscatt and Gamma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$"
+#	mod_vals+=" &  &  & 0.2 &  & &  & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## Fscatt and Tbb
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{bb}}\$"
+#	mod_vals+=" &  &  & 0.2 &  & &  &  & 2500 &  & &  "  ## Fscatt and Nbb
+#	varpar="\$F_{\\text{scatt}}\$, \$N_{\\text{bb}}\$"
+#    mod_vals+=" &  &  & 0.2 &  & &  &  & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Fscatt and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$E_{\\text{line}}\$"
+#    mod_vals+=" &  &  & 0.2 &  & &  &  & & & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## Fscatt and sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\sigma_{\\text{line}}\$"
+#	mod_vals+=" &  &  & 0.2 &  & &  &  & &  & & 0.01 "  ## Fscatt and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$N_{\\text{line}}\$"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 &  &  & &  & .6 .002 0.1 0.1 1.0 1.0 &  &  & & " ## Gamma and Tbb
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 &  &  & &  &  & 2500 &  & &  "  ## Gamma and Nbb
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 &  &  & &  "  ## Fscatt and Gamma and Tbb
+#    varpar="\$F_\\text{scatt}\$,  \$\\Gamma\$, \$T_\\text{bb}\$"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & &  & 2500 &  & &  "  ## Fscatt and Gamma and Nbb
+#    varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{bb}}\$ "
+#	mod_vals+=" &  & & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## Fscatt and Tbb and Nbb
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{bb}}\$, \$N_{\\text{bb}}\$"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & &  &  &  & & 0.01 "  ## Gamma and Fscatt and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{line}}\$"
+#	mod_vals+=" &  & & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0  &  &  & & 0.01 "  ## Fscatt and Tbb and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{bb}}\$, \$N_{\\text{line}}\$"
+#    mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & &  &  & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Fscatt and Gamma and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$E_{\\text{line}}\$"
+#    mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & &  &  & & & 0.7 .005 0.1 0.1 1.0 1.0  &  "  ## Fscatt and Gamma and sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$\\sigma_{\\text{line}}\$"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & &  &  & &  & & 0.01 "  ## Fscatt and Gamma and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{line}}\$"
+#    mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & 2000 &  & &  "  ## Gamma and Fscatt and Tbb and Nbb
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{bb}}\$, \$N_{\\text{bb}}\$"
+#    mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Gamma and Fscatt and Tbb and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{bb}}\$, \$E_{\\text{line}}\$"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## Gamma and Fscatt and Tbb and sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{bb}}\$, \$\\sigma_{\\text{line}}\$"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 &  & & & 0.6 .002 0.1 0.1 1.0 1.0 & & & & 0.01 "  ## Gamma and Fscatt and Tbb and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$T_{\\text{bb}}\$, \$N_{\\text{line}}\$"
 
 
 
 ## For phabs*(simpler*diskpbb+gauss)
 #	mod_vals+=" &  &  &  &  & & & & & &  "  ## All tied
-#    varpar=" - "
-#	mod_vals+=" &  &  & 0.2 &  &  & &  &  &  &  "   ## FracSctr
-#	varpar="\\texttt{simpler} FracSctr"
-#	mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & &  & &  &  &  & &  "  ## Gamma
-#	varpar="\\texttt{simpler} Gamma"
-#	mod_vals+=" &  &  &  &  & 0.6 .002 0.1 0.1 1.0 1.0 & &  &  & & " ## diskpbb Tin
-#	varpar="\\texttt{diskpbb} T\$_{\\text{in}}\$"
-#	mod_vals+=" &  &  &  &  &  & 0.75 & & &   & " ## diskpbb p
-#	varpar="\\texttt{diskpbb} p"
-#	mod_vals+=" &  &  &  &  &  & & 3000 & &  & " ## diskpbb norm
-#	varpar="\\texttt{diskpbb} norm"
-#	mod_vals+=" &  & &  &  & &  &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## line E
-#	varpar="\\texttt{gauss} LineE"
-#    mod_vals+=" &  & &  &  & &  &  & &  & 0.01 "  ## E norm
-#	varpar="\\texttt{gauss} norm"
-#    mod_vals+=" &  & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 & & & & &  &  &  "  ## FracSctr and Gamma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{simpler} Gamma"
-#	mod_vals+=" & &  & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & &  & & " ## FracSctr and diskpbb Tin
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$"
-#	mod_vals+=" &  &  & 0.2 & & & 0.75 & & & & " ## FracSctr and diskpbb p
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} p"
-#	mod_vals+=" &  &  & 0.2 & &  & & 2000 &  & & " ## FracSctr and diskpbb norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} norm"
-#    mod_vals+=" &  &  & 0.2 & & & &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## FracSctr and line E
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} LineE"
-#	mod_vals+=" &  &  & 0.2 & & & &  &  & & 0.01 "  ## FracSctr and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{gauss} norm"
-#	mod_vals+=" & & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & &  & & " ## FracSctr and diskpbb Tin and Gamma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{simpler} Gamma"
-#    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & .75 & &  & & " ## FracSctr and diskpbb Tin and diskpbb p
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} p"
-#    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 &  & & " ## FracSctr and diskpbb Tin and diskpbb norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm"
-#    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr and diskpbb Tin and line E
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{gauss} LineE"
-#    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & & & & 0.01" ## FracSctr and diskpbb Tin and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{gauss} norm"
-#    mod_vals+=" & & 2.6 0.01 2.0 2.0 3.1 3.1 & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 &  & & " ## FracSctr and diskpbb Tin and diskpbb norm and Gamma
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{simpler} Gamma"
-#    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & .75 & 2000 & & & " ## FracSctr and diskpbb Tin and diskpbb norm and diskpbb p
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{diskpbb} p"
-#    mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## FracSctr and diskpbb Tin and diskpbb norm and line E
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{gauss} LineE"
-#	mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 & & & 0.01 " ## FracSctr and diskpbb Tin and diskpbb norm and E norm
-#	varpar="\\texttt{simpler} FracSctr, \\texttt{diskpbb} T\$_{\\text{in}}\$, \\texttt{diskpbb} norm, \\texttt{gauss} norm"
+#   varpar=" - "
+#	mod_vals+=" &  &  & 0.2 &  &  & &  &  &  &  "   ## Fscatt
+#	varpar="\$F_{\\text{scatt}}\$"
+#	mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & &  & &  &  &  & &  "  ## Gamma
+#	varpar="\$\\Gamma\$"
+#	mod_vals+=" &  &  &  &  & 0.6 .002 0.1 0.1 1.0 1.0 & &  &  & & " ## TdiskP
+#	varpar="\$T_{\\text{diskP}}\$"
+#	mod_vals+=" &  &  &  &  &  & 0.75 & & &   & " ## p
+#	varpar="\$p\$"
+#	mod_vals+=" &  &  &  &  &  & & 3000 & &  & " ## NdiskP
+#	varpar="\$N_{\\text{diskP}}\$"
+#	mod_vals+=" &  & &  &  & &  &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Eline
+#	varpar="\$E_{\\text{line}}\$"
+#	mod_vals+=" &  & &  &  & &  &  &  & 0.7 .005 0.1 0.1 1.0 1.0 &  "  ## sigma
+#	varpar="\\textsc{gauss} \$\\sigma_{\\text{line}}\$"
+#   mod_vals+=" &  & &  &  & &  &  & &  & 0.01 "  ## Nline
+#	varpar="\$N_{\\text{line}}\$"
+#   mod_vals+=" &  & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & & & &  &  &  "  ## Fscatt and Gamma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$"
+#	mod_vals+=" & &  & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & &  & & " ## Fscatt and TdiskP
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$"
+#	mod_vals+=" &  &  & 0.2 & & & 0.75 & & & & " ## Fscatt and p
+#	varpar="\$F_{\\text{scatt}}\$, \$p\$"
+#	mod_vals+=" &  &  & 0.2 & &  & & 2000 &  & & " ## Fscatt and NdiskP
+#	varpar="\$F_{\\text{scatt}}\$, \$N_{\\text{diskP}}\$"
+#   mod_vals+=" &  &  & 0.2 & & & &  & 6.4 0.005 5.5 5.5 7.0 7.0 & &  "  ## Fscatt and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$E_{\\text{line}}\$"
+#	mod_vals+="& & & 0.2 & & & & & & 0.8 0.002 0.3 0.3 1.0 1.0 & " ## Fscatt and sigma
+#	varpar="\$F_{\\text{scatt}}\$, \\textsc{gauss} \$\\sigma_{\\text{line}}\$"
+#	mod_vals+=" &  &  & 0.2 & & & &  &  & & 0.01 "  ## Fscatt and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$N_{\\text{line}}\$"
+#	mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & &  & & " ## Fscatt and Gamma and TdiskP
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \\textsc{diskpbb} \$T_{\\text{diskP}}\$"
+   mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & & .75 & &  & & " ## Fscatt and Gamma and p
+	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$p\$"
+#   mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & & & 2000 &  & & " ## Fscatt and Gamma and NdiskP
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{diskP}}\$"
+#   mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## Fscatt and Gamma and LineE
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$E_{\\text{line}}\$"
+#   mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & & & & & & 0.01 " ## Fscatt and Gamma and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$N_{\\text{line}}\$"
+#   mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 &  & & " ## Fscatt and TdiskP and NdiskP
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$, \$N_{\\text{diskP}}\$"
+#   mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## Fscatt and TdiskP and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$, \$E_{\\text{line}}\$"
+#   mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & & & & 0.01" ## Fscatt and TdiskP and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$, \$N_{\\text{line}}\$"
+#   mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 &  & & " ## Fscatt and TdiskP and NdiskP and Gamma
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$, \$N_{\\text{diskP}}\$, \$\\Gamma\$"
+#   mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & .75 & 2000 & & & " ## Fscatt and TdiskP and NdiskP and p
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$, \$N_{\\text{diskP}}\$, \$p\$"
+#   mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 & 6.4 0.005 5.5 5.5 7.0 7.0 & & " ## Fscatt and TdiskP and NdiskP and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$, \$N_{\\text{diskP}}\$, \$E_{\\text{line}}\$"
+#	mod_vals+=" & & & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0 & & 2000 & & & 0.01 " ## Fscatt and TdiskP and NdiskP and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$T_{\\text{diskP}}\$, \$N_{\\text{diskP}}\$, \$N_{\\text{line}}\$"
+#   mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & & 0.6 .002 0.1 0.1 1.0 1.0  & .75 & &  & & " ## Fscatt and Gamma and p and TdiskP
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$p\$, \$T_{\\text{diskP}}\$"
+#   mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & &  & .75 & 1000 &  & & " ## Fscatt and Gamma and p and NdiskP
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$p\$, \$N_{\\text{diskP}}\$"
+#	mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & &  & .75 & & 6.4 0.005 5.5 5.5 7.0 7.0  & & " ## Fscatt and Gamma and p and Eline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$p\$, \$E_{\\text{line}}\$"
+#	mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & &  & .75 & & & 0.8 0.002 0.3 0.3 1.0 1.0 & " ## Fscatt and Gamma and p and sigma
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$p\$, \$\\sigma_{\\text{line}}\$"
+#	mod_vals+=" & & 2.6 0.01 1.0 1.0 3.1 3.1 & 0.2 & &  & .75 & & & & 0.01" ## Fscatt and Gamma and p and Nline
+#	varpar="\$F_{\\text{scatt}}\$, \$\\Gamma\$, \$p\$, \$N_{\\text{line}}\$"
+
 
 ##
 ## For phabs*(nthcomp+bbodyrad+bbodyrad+gauss)
@@ -357,9 +377,9 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 #	mod_vals+=" &  &     &  &  & &  & &  &  &  & & & & "
 #	mod_vals+=" &  & 2.8 0.01 2.6 2.6 3.1 3.1 &  &  & &  & &  &  &  & & & & "
 #	mod_vals+=" &  &     &  &  & &  & .2 &  &  &  & & & & "
-#    mod_vals+=" &  & 2.8 0.01 2.6 2.6 3.1 3.1 &  &  & &  & .2 &  &  &  & & & & "
-#	mod_vals+=" &  &  2.8 0.01 2.0 2.0 3.1 3.1  &  &  & &  & .2 &  &  & .6 .005 0.1 0.1 2.0 2.0 & & & & "
-#	mod_vals+=" &  &  2.8 0.01 2.6 2.6 3.1 3.1  &  &  & &  & &  &  & .6 .005 0.1 0.1 2.0 2.0 & & & & "
+#   mod_vals+=" &  & 2.8 0.01 2.6 2.6 3.1 3.1 &  &  & &  & .2 &  &  &  & & & & "
+#	mod_vals+=" &  &  2.6 0.01 1.0 1.0 3.1 3.1  &  &  & &  & .2 &  &  & .6 .005 0.1 0.1 2.0 2.0 & & & & "
+#	mod_vals+=" &  &  2.6 0.01 1.0 1.0 3.1 3.1  &  &  & &  & &  &  & .6 .005 0.1 0.1 2.0 2.0 & & & & "
 #	mod_vals+=" &  &     &  &  & &  & .2 & .6 .005 0.1 0.1 2.0 2.0 &  &  & & & & "
 #	mod_vals+=" &  &     &  &  & &  & .2 &    & 3000 &  & & & & "
 
@@ -375,8 +395,8 @@ for (( timebin=8182; timebin<=8205; timebin++ )); do
 #    mod_vals+=" & & & & & & & .05 & & & & & "
 #    mod_vals+=" & & & & & & & & .7 & & & & "
 #    mod_vals+=" & & & & & & & & & 100 & & & "
-#     mod_vals+=" & & & & & & & .05 & .7 & & & & "
-#     mod_vals+=" & & & & & & & .05 & .7 & 100 & & & "
+#    mod_vals+=" & & & & & & & .05 & .7 & & & & "
+#    mod_vals+=" & & & & & & & .05 & .7 & 100 & & & "
 #    mod_vals+=" & & 1.9 0.01 1.0 1.0 3.1 3.1 & & & & & .05 & .7 & & & & "
 
 	((i+=1))
@@ -390,8 +410,8 @@ export n_params
 
 ################################################################################
 mcmc_file="${prefix}_${day}_${fit_specifier}_MCMC.fits"
-if [ -e "$xspec_log" ]; then rm "$xspec_log"; fi; touch "$xspec_log"
-if [ -e "${out_dir}/$mcmc_file" ]; then rm "${out_dir}/$mcmc_file"; fi;
+#if [ -e "$xspec_log" ]; then rm "$xspec_log"; fi; touch "$xspec_log"
+#if [ -e "${out_dir}/$mcmc_file" ]; then rm "${out_dir}/$mcmc_file"; fi;
 fzpar=" - "
 
 ########################################
@@ -411,26 +431,23 @@ echo "abund wilm" >> $xspec_script
 ##
 ## GX339-4 spectral model #1:  simpler * diskbb + gauss
 ##
-model_string="phabs*(simpler*diskbb+gauss)"
-echo "mod ${model_string} $mod_vals" >> $xspec_script
-echo "newpar 1 0.6 -0.1" >> $xspec_script ## From Reynolds and Miller 2013
-echo "newpar 2 2.6 0.005 2.0 2.0 3.1 3.1" >> $xspec_script
-echo "newpar 3 0.2" >> $xspec_script
-echo "newpar 4 1" >> $xspec_script
-echo "freeze 4" >> $xspec_script
-echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
-#echo "newpar 5 0.830878" >> $xspec_script
-#echo "freeze 5" >> $xspec_script
-#fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$"
-echo "newpar 6 2505.72" >> $xspec_script
-#echo "freeze 6" >> $xspec_script
-#fzpar="\\texttt{diskbb} norm\$\\,=2505.72\$"
-echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-echo "newpar 8 0.8 .005 0.1 0.1 1.0 1.0" >> $xspec_script
-#echo "newpar 8 0.97" >> $xspec_script  ## Value from steppar on mean spectrum
-#echo "freeze 8" >> $xspec_script
-#fzpar+=", \\texttt{gauss} \$\\sigma = 0.97\$ "
-echo "newpar 9 1.0E-02" >> $xspec_script
+#model_string="phabs*(simpler*diskbb+gauss)"
+#echo "mod ${model_string} $mod_vals" >> $xspec_script
+#echo "newpar 1 0.6 -0.1" >> $xspec_script ## From Reynolds and Miller 2013
+#echo "newpar 2 2.6 0.005 1.0 1.0 3.1 3.1" >> $xspec_script
+#echo "newpar 3 0.2" >> $xspec_script
+#echo "newpar 4 1 -0.1" >> $xspec_script
+#echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
+##echo "newpar 5 0.830878 -0.1" >> $xspec_script
+##fzpar="\$T_{\\text{disk}}\$"
+#echo "newpar 6 2505.72" >> $xspec_script
+##echo "newpar 6 2505.72 -0.1" >> $xspec_script
+##fzpar="\$N_{\\text{disk}}=2505.72\$"
+#echo "newpar 7 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
+##echo "newpar 8 0.8 .005 0.1 0.1 1.0 1.0" >> $xspec_script
+#echo "newpar 8 0.97 -0.1" >> $xspec_script  ## Value from steppar on mean spectrum
+#fzpar+=", \$\\sigma = 0.97\$ "
+#echo "newpar 9 1.0E-02" >> $xspec_script
 
 ##
 ## GX339-4 spectral model #2:  simpler * diskbb + bbodyrad + gauss
@@ -439,61 +456,54 @@ echo "newpar 9 1.0E-02" >> $xspec_script
 #echo "mod ${model_string} $mod_vals" >> $xspec_script
 #echo "newpar 1 0.6" >> $xspec_script
 #echo "freeze 1" >> $xspec_script
-#echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+#echo "newpar 2 2.6 0.01 1.0 1.0 3.1 3.1" >> $xspec_script
 #echo "newpar 3 0.2" >> $xspec_script
 #echo "newpar 4 1" >> $xspec_script
 #echo "freeze 4" >> $xspec_script
 #echo "newpar 5 0.83 0.002 0.6 0.6 1.0 1.0" >> $xspec_script
 ###echo "newpar 5 0.955420" >> $xspec_script
-##echo "newpar 5 0.830759333333" >> $xspec_script
-##echo "freeze 5" >> $xspec_script
-##fzpar="\\texttt{diskbb} T\$_{\\text{in}}\$=0.830759333333"
-#echo "newpar 6 2500" >> $xspec_script
-##echo "freeze 6" >> $xspec_script
-##fzpar="\\texttt{diskbb} norm = 2505.72"
+##echo "newpar 5 0.830759333333 -0.1" >> $xspec_script
+##fzpar="\$T_{\\text{disk}}=0.8307593\$"
+#echo "newpar 6 2500 " >> $xspec_script
+##echo "newpar 6 2505.72 -1" >> $xspec_script
+##fzpar="\$N_{\\text{disk}} = 2505.72\$"
 #echo "newpar 7 0.6 0.002 0.1 0.1 1.0 1.0" >> $xspec_script
-##echo "newpar 7 0.537252" >> $xspec_script
-##echo "freeze 7" >> $xspec_script
-##fzpar="\\texttt{bbodyrad} kT"
+##echo "newpar 7 0.537252 -0.1" >> $xspec_script
+##fzpar="\$T_{\\text{bb}}\$"
 ##echo "newpar 8 600 5 50 50 1000 1000" >> $xspec_script
 ##echo "newpar 8 1000" >> $xspec_script
-#echo "newpar 8 8857.68" >> $xspec_script
-#echo "freeze 8" >> $xspec_script
-#fzpar="\\texttt{bbodyrad} norm\$\\,=8857.68\$"
+#echo "newpar 8 8857.68 -0.1" >> $xspec_script
+#fzpar="\$N_{\\text{bb}}=8857.68\$"
 #echo "newpar 9 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-##echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script  ## Value from steppar on mean spectrum
-#echo "newpar 10 0.82" >> $xspec_script  ## Value from steppar on mean spectrum
-##echo "newpar 10 0.56" >> $xspec_script  ## Value from steppar on mean spectrum
-#echo "freeze 10" >> $xspec_script
-#fzpar+=", \\texttt{gauss} \$\\sigma=0.82\$"
+##echo "newpar 10 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script
+#echo "newpar 10 0.82 -0.1" >> $xspec_script  ## Value from steppar on mean spectrum
+##echo "newpar 10 0.56 -0.1" >> $xspec_script  ## Value from steppar on mean spectrum
+#fzpar+=", \$\\sigma_\\text{line}=0.82\$"
 #echo "newpar 11 0.01" >> $xspec_script
 
 ##
-## FOR GX339-4 2010 outburst, using diskpbb
+## GX339-4 spectral model #3: simpler * diskPbb + gauss
 ##
 #model_string="phabs*(simpler*diskpbb+gauss)"
 #echo "mod ${model_string} $mod_vals" >> $xspec_script
-#echo "newpar 1 0.6" >> $xspec_script
-#echo "freeze 1" >> $xspec_script
-#echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+#echo "newpar 1 0.6 -0.1" >> $xspec_script
+#echo "newpar 2 2.6 0.01 1.0 1.0 3.1 3.1" >> $xspec_script
 #echo "newpar 3 0.2" >> $xspec_script
-#echo "newpar 4 1" >> $xspec_script
-#echo "freeze 4" >> $xspec_script
+#echo "newpar 4 1 -0.1" >> $xspec_script
 #echo "newpar 5 0.8 0.002 0.5 0.5 1.0 1.0" >> $xspec_script
-##echo "newpar 5 0.744958" >> $xspec_script
-##echo "newpar 5 0.838785" >> $xspec_script
-##echo "freeze 5" >> $xspec_script
-##fzpar="\\texttt{diskpbb} T\$_{\\text{in}}\$"
-#echo "newpar 6 0.525230" >> $xspec_script
-##echo "freeze 6" >> $xspec_script
-##fzpar="\\texttt{diskpbb} p"
-#echo "newpar 7 685.176" >> $xspec_script
-##echo "freeze 7" >> $xspec_script
-##fzpar="\\texttt{diskpbb} norm"
+##echo "newpar 5 0.744958 -0.1" >> $xspec_script
+##echo "newpar 5 0.838785 -0.1" >> $xspec_script
+##fzpar="\$T_\\text{diskP}\$"
+#echo "newpar 6 0.75" >> $xspec_script
+##echo "newpar 6 0.75 -0.1" >> $xspec_script
+##fzpar="\$ p = 0.75\$"
+##echo "newpar 7 560.907" >> $xspec_script
+#echo "newpar 7 560.907 -0.1" >> $xspec_script
+#fzpar="\$N_{\\text{diskP}}=560.907\$"
 #echo "newpar 8 6.4 0.005 5.5 5.5 7.0 7.0" >> $xspec_script
-#echo "newpar 9 0.76" >> $xspec_script  ## Value from steppar on mean spectrum
-#echo "freeze 9" >> $xspec_script
-#fzpar+="\\texttt{gauss} sigma"
+##echo "newpar 9 0.7 .005 0.1 0.1 1.0 1.0" >> $xspec_script
+#echo "newpar 9 0.76 -0.1" >> $xspec_script  ## Value from steppar on mean spectrum
+#fzpar+=", \$\\sigma_\\text{line}=0.76\$"
 #echo "newpar 10 0.01" >> $xspec_script
 
 ##
@@ -503,7 +513,7 @@ echo "newpar 9 1.0E-02" >> $xspec_script
 #echo "mod ${model_string} $mod_vals" >> $xspec_script
 #echo "newpar 1 0.6" >> $xspec_script  ## This value is from Reynolds and Miller 2013
 #echo "freeze 1" >> $xspec_script
-#echo "newpar 2 2.6 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+#echo "newpar 2 2.6 0.01 1.0 1.0 3.1 3.1" >> $xspec_script
 #echo "newpar 3 0.2" >> $xspec_script
 #echo "newpar 4 1" >> $xspec_script
 #echo "freeze 4" >> $xspec_script
@@ -547,7 +557,7 @@ echo "newpar 9 1.0E-02" >> $xspec_script
 #echo "mod ${model_string} $mod_vals" >> $xspec_script
 #echo "newpar 1 0.6" >> $xspec_script  ## This value is from Reynolds and Miller 2013
 #echo "freeze 1" >> $xspec_script
-#echo "newpar 2 2.8 0.01 2.0 2.0 3.1 3.1" >> $xspec_script
+#echo "newpar 2 2.6 0.01 1.0 1.0 3.1 3.1" >> $xspec_script
 #echo "newpar 3 80.0 50.0 50.0 200.0 200.0" >> $xspec_script
 #echo "thaw 3" >> $xspec_script
 #echo "newpar 4 0.8" >> $xspec_script
@@ -655,8 +665,6 @@ echo "fit 1000" >> $xspec_script
 ## Uncomment the following to do MCMC error finding
 ####################################################
 if (( mcmc_flag == 1 )); then
-    total_par=$((n_params*n_spectra))
-    echo "total pars: $total_par"
     echo "chain type gw " >> $xspec_script
     echo "chain burn 2000" >> $xspec_script
     echo "chain walkers 1000" >> $xspec_script
@@ -664,8 +672,7 @@ if (( mcmc_flag == 1 )); then
     echo "chain run $mcmc_file">> $xspec_script
     total_par=$((n_params*n_spectra))
     echo "total pars: $total_par"
-    #echo "error maximum 10000. 2.706 1-$total_par" >> $xspec_script
-    echo "error maximum 10000. 1 1-423" >> $xspec_script
+    echo "error maximum 10000. 2.706 1-$total_par" >> $xspec_script
 fi
 
 
@@ -696,7 +703,9 @@ echo "exit" >> $xspec_script
 cd "$out_dir"
 ##xspec - "$xspec_script"  ## use this one for tcl
 ##xspec < "$xspec_script"  ## use this one for plotting
-xspec "$xspec_script" > $dump_file    ## use this one if you expect interactivity with fit
+
+#xspec "$xspec_script" > $dump_file
+
 # > $dump_file  ## stick this on the end to put all output into a dump file
 
 ##tail -n 10 "$xspec_log"
@@ -711,8 +720,8 @@ dof=$(tail -n 1 dof.txt)
 echo CHISQUARED = "$chis"
 echo DOF = "$dof"
 #
-#echo " & \\texttt{$model_string} & \$$chis / $dof\$ & $varpar & " >> $tex_tab_file
-echo " & \\texttt{$model_string} & \$$chis / $dof\$ & $varpar & $fzpar \\\\ " >> $tex_tab_file
+#echo " & \\textsc{$model_string} & \$$chis / $dof\$ & $varpar & " >> $tex_tab_file
+echo " & \\textsc{$model_string} & \$$chis / $dof\$ & $varpar & $fzpar \\\\ " >> $tex_tab_file
 ## The lag chisquared, \ref, and \\ are added in fake_qpo_spectra.py
 echo ""
 echo "Finished running sed_fitting.sh"
@@ -726,7 +735,7 @@ python $exe_dir/multifit_plots.py "$out_dir/$xspec_log" \
         -w "$parfit_file"
 
 #open "$tex_tab_file"
-#open "$parfit_file"
+open "$parfit_file"
 export parfit_file
 
 ## In directory 'Scripts', can run log_to_textable.ipynb to put an xspec log

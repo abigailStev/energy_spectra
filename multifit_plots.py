@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Reads an XSPEC log file and makes plots of varying SED parameters as a function
-of QPO or pulse phase. Fits the changing SED parameters with a function and gets
-the 'phase' of each parameter variation.
+Reads an XSPEC log file and makes plots of varying spectral parameters as a
+function of QPO or pulse phase. Fits the changing spectral parameters with a
+function and gets the 'phase' of each parameter variation.
 
 """
 import numpy as np
@@ -17,13 +17,14 @@ from scipy.optimize import leastsq
 import os.path
 from datetime import datetime
 import sed_pars
+import matplotlib.colors as colors
 
 __author__ = "Abigail Stevens <A.L.Stevens at uva.nl>"
 __year__ = "2015-2016"
 
 
 ################################################################################
-def get_logfile_errors(log_file, num_spectra, mod_components):
+def get_logfile_errors(log_file, num_spectra, mod_parameters):
     """
     Reads (fake) errors on the varying parameters from the XSPEC log file.
     Only uses the first value and repeats along an array, since just need this
@@ -40,30 +41,30 @@ def get_logfile_errors(log_file, num_spectra, mod_components):
     num_spectra : int
         Number of energy spectra being simultaneously fit in one QPO phase.
 
-    mod_components : list of Parameter objects
+    mod_parameters : list of Parameter objects
         The model parameters used.
 
     Returns
     -------
-    mod_components
+    mod_parameters
         List of model parameters used, with the errors assigned.
     """
 
     with open(log_file, 'r') as f:
         for line in f:
 
-            for component in mod_components:
-                if component.mod_name in line and component.par_name in line \
-                        and component.varying:
+            for parameter in mod_parameters:
+                if parameter.mod_name in line and parameter.par_name in line \
+                        and parameter.varying:
                     temp = line.split()[-1].strip()
                     if temp == "frozen":
-                        component.pos_err = np.zeros(num_spectra)
-                        component.neg_err = np.zeros(num_spectra)
+                        parameter.pos_err = np.zeros(num_spectra)
+                        parameter.neg_err = np.zeros(num_spectra)
                     else:
-                        component.pos_err = np.repeat(float(temp), num_spectra)
-                        component.neg_err = np.repeat(float(temp), num_spectra)
+                        parameter.pos_err = np.repeat(float(temp), num_spectra)
+                        parameter.neg_err = np.repeat(float(temp), num_spectra)
 
-    return mod_components
+    return mod_parameters
 
 
 ################################################################################
@@ -119,14 +120,14 @@ def read_chain(error_file_o):
 
 
 ################################################################################
-def get_chain_errors(mod_components, par_nums, lo_v, hi_v, neg_err, pos_err):
+def get_chain_errors(mod_parameters, par_nums, lo_v, hi_v, neg_err, pos_err):
     """
-    Gets the error on the varying SED parameters from the MCMC chain.
+    Gets the error on the varying spectral parameters from the MCMC chain.
 
     Paramters
     ---------
-    mod_components : list of Parameter objects
-        The components of the SED model.
+    mod_parameters : list of Parameter objects
+        The parameters of the spectral model.
 
     par_nums : np.array of int
         1-D array of the XSPEC parameter number of each varying parameter.
@@ -150,31 +151,31 @@ def get_chain_errors(mod_components, par_nums, lo_v, hi_v, neg_err, pos_err):
     Returns
     -------
     var_pars : list of Parameter objects
-        A 1-D list of the untied SED parameters that vary with QPO phase.
+        A 1-D list of the untied spectral parameters that vary with QPO phase.
     """
 
     # print type(par_nums)
-    # print type(mod_components)
+    # print type(mod_parameters)
     # print type(lo_v)
     # print type(hi_v)
     # print type(neg_err)
     # print type(pos_err)
 
-    for component in mod_components:
+    for parameter in mod_parameters:
         temp_mask = np.array([], dtype=bool)
 
-        if component.varying:
+        if parameter.varying:
             for elt in par_nums:
-                if elt in component.par_num:
+                if elt in parameter.par_num:
                     temp_mask = np.append(temp_mask, True)
                 else:
                     temp_mask = np.append(temp_mask, False)
-            component.pos_err = pos_err[temp_mask]
-            component.neg_err = np.abs(neg_err[temp_mask])
-            component.lo_v = lo_v[temp_mask]
-            component.hi_v = hi_v[temp_mask]
+            parameter.pos_err = pos_err[temp_mask]
+            parameter.neg_err = np.abs(neg_err[temp_mask])
+            parameter.lo_v = lo_v[temp_mask]
+            parameter.hi_v = hi_v[temp_mask]
 
-    return mod_components
+    return mod_parameters
 
 
 ################################################################################
@@ -195,18 +196,19 @@ def read_log_file(log_file, quiet=True):
 
     Returns
     -------
-    mod_components : list of Parameter objects
-        A 1-D list of all SED parameters for the model.
+    mod_parameters : list of Parameter objects
+        A 1-D list of all spectral parameters for the model.
 
     num_spectra : int
         Number of spectra being simultaneously fit for one QPO phase.
     """
 
     if not os.path.isfile(log_file) or os.path.getsize(log_file) == 0:
+        print log_file
         raise Exception("Log file does not exist or is empty.")
 
     chains = False
-    mod_components = [sed_pars.Phabs().nH, sed_pars.Simpler().Gamma,
+    mod_parameters = [sed_pars.Phabs().nH, sed_pars.Simpler().Gamma,
             sed_pars.Simpler().FracSctr, sed_pars.Simpler().UpScOnly,
             sed_pars.Simpl().Gamma, sed_pars.Simpl().FracSctr,
             sed_pars.Simpl().UpScOnly, sed_pars.Diskbb().Tin,
@@ -222,17 +224,17 @@ def read_log_file(log_file, quiet=True):
 
     with open(log_file, 'r') as f:
         for line in f:
-            for component in mod_components:
-                if component.mod_name in line and component.par_name in line:
+            for parameter in mod_parameters:
+                if parameter.mod_name in line and parameter.par_name in line:
                     if "frozen" in line:
-                        component.value = np.append(component.value,
+                        parameter.value = np.append(parameter.value,
                             float(line.split()[-2]))
-                        component.par_num = np.append(component.par_num,
+                        parameter.par_num = np.append(parameter.par_num,
                             int(line.split()[1]))
                     else:
-                        component.value = np.append(component.value,
+                        parameter.value = np.append(parameter.value,
                                 float(line.split()[-3]))
-                        component.par_num = np.append(component.par_num,
+                        parameter.par_num = np.append(parameter.par_num,
                                 int(line.split()[1]))
 
             if "Parameter" in line and "Confidence Range" in line:
@@ -241,33 +243,33 @@ def read_log_file(log_file, quiet=True):
 
 
     #############################################################
-    ## Delete components if they're not used/present
+    ## Delete parameters if they're not used/present
     ## Determine if parameter varies across QPO phase or is tied
-    ## Assign zero error to components
+    ## Assign zero error to parameters
     #############################################################
 
     # num_spectra = np.amax([len(nth.Gamma.value), len(simpler.Gamma.value)])
-    unused_components = []
+    unused_parameters = []
     num_spectra = 1
 
-    for component in mod_components:
-        # print component.mod_name, component.par_name
-        if len(component.value) > 1:
-            # print component.value[0], component.value[1], component.value[3]
-            if component.value[0] != component.value[1] or \
-                    component.value[7] != component.value[0]:
-                component.varying = True
-                num_spectra = len(component.value)
-        elif len(component.value) == 0:
-            unused_components.append(component)
+    for parameter in mod_parameters:
+        # print parameter.mod_name, parameter.par_name
+        if len(parameter.value) > 1:
+            # print parameter.value[0], parameter.value[1], parameter.value[3]
+            if parameter.value[0] != parameter.value[1] or \
+                    parameter.value[7] != parameter.value[0]:
+                parameter.varying = True
+                num_spectra = len(parameter.value)
+        elif len(parameter.value) == 0:
+            unused_parameters.append(parameter)
 
-        # component.pos_err = np.zeros(len(component.value))
-        # component.neg_err = np.zeros(len(component.value))
-        # component.lo_v = component.value
-        # component.hi_v = component.value
+        # parameter.pos_err = np.zeros(len(parameter.value))
+        # parameter.neg_err = np.zeros(len(parameter.value))
+        # parameter.lo_v = parameter.value
+        # parameter.hi_v = parameter.value
 
-    for elt in unused_components:
-        mod_components.remove(elt)
+    for elt in unused_parameters:
+        mod_parameters.remove(elt)
 
     ############################################################################
     ## Reading in errors from 'chain' part of log, or bad errors from normal log
@@ -275,33 +277,34 @@ def read_log_file(log_file, quiet=True):
 
     var_pars = 0
     # print "VarPars"
-    for component in mod_components:
-        if component.varying:
+    for parameter in mod_parameters:
+        if parameter.varying:
             var_pars += 1
-            # print component.mod_name, component.par_name
+            # print parameter.mod_name, parameter.par_name
 
     if var_pars == 0:
         raise Exception("No parameters vary with QPO phase in this log file.")
         exit()
 
     if chains:
-        mod_components = get_chain_errors(mod_components, par_nums, lo_v, hi_v,
+        mod_parameters = get_chain_errors(mod_parameters, par_nums, lo_v, hi_v,
                 neg_err, pos_err)
 
     if not chains:
         if not quiet:
             print("Using fake errors from log file. Need to run error "\
                     "analysis!!")
-        mod_components = get_logfile_errors(log_file, num_spectra, \
-                mod_components)
+        mod_parameters = get_logfile_errors(log_file, num_spectra, \
+                mod_parameters)
 
-    return mod_components, num_spectra
+    return mod_parameters, num_spectra
 
 
 ################################################################################
 def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
     """
-    Making plots of SED parameters vs phase for multiple co-varying parameters.
+    Making plots of spectral parameters vs phase for multiple co-varying
+    parameters.
 
     Parameters
     ----------
@@ -309,10 +312,10 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
         The full path of the file name to save the plot to.
 
     num_spectra : int
-        The number of SEDs that were co-fit.
+        The number of spectra that were co-fit.
 
     var_pars : list of Parameter objects
-        A 1-D list of the SED parameters that vary with QPO phase.
+        A 1-D list of the spectral parameters that vary with QPO phase.
 
     quiet : bool
         If True, will not open the plot made. [False]
@@ -323,11 +326,14 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
     font_prop = font_manager.FontProperties(size=18)
     xLocator = MultipleLocator(0.05)  ## loc of minor ticks on x-axis
 
-    phase = np.arange(num_spectra) / 23.646776
+    phase = np.arange(num_spectra) / 23.5
     if num_spectra == 24:
-        tinybins = np.arange(-0.02, 1.02, 0.01)
+        tinybins = np.arange(-0.02, 1.02, 0.001)
+    elif num_spectra == 47:
+        tinybins = np.arange(-0.02, 2.02, 0.001)
     else:
-        tinybins = np.arange(-0.02, 2.02, 0.01)
+        phase -= 1.0
+        tinybins = np.arange(-1.02, 2.02, 0.001)
 
     ## So that the plotted x-value is the MIDDLE of the 'bin', with and error of
     ## the width of the bin.
@@ -336,57 +342,69 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
     phase += plusphase
     tinybins += plusphase
 
-    colours = ['red', 'green', 'blue', 'orange', 'gray']
-
-    # print("Plot file: %s" % plot_name)
-
+    colours = ['red', 'green', 'blue', colors.cnames['darkorange'],
+            colors.cnames['darkorchid'], colors.cnames['darkslategray']]
     ax_list = []
 
+    # fig = plt.figure(figsize=(14, 12), tight_layout=True, dpi=300)  ## for 2 pds
     fig = plt.figure(figsize=(10, 12), tight_layout=True, dpi=300)
-    i=1
-    # print np.shape(var_pars)
+
+    i = 1
 
     for param in var_pars:
 
         param_max = -1
 
-        if param.funcfit is not None:
+        if param.phi_max is not None:
+            param_max = param.phi_max
+        elif param.funcfit is not None:
             param_max = tinybins[np.argmax(param.funcfit)]
-            # print param.par_name
-            # print "\tPhase of max parameter value:", param_max
+            print param.par_name
+            print "\tPhase of max parameter value:", param_max
 
         temp = (np.max(param.value)-np.min(param.value)) * 0.25
-        ymax = np.max(param.value+param.pos_err) + temp
-        ymin = np.min(param.value-param.pos_err) - temp
+        print np.max(param.value+param.pos_err) + temp
+        print np.min(param.value-param.pos_err) - temp
+
+        if i == 1:
+            ymax = 2.77
+            ymin = 2.16
+        elif i == 2:
+            ymax = 0.28
+            ymin = 0.07
+        else:
+            temp = (np.max(param.value)-np.min(param.value)) * 0.25
+            ymax = np.max(param.value+param.pos_err) + temp
+            ymin = np.min(param.value-param.pos_err) - temp
+            # print ymax
+            # print ymin
 
         if i == 1:
             ax = fig.add_subplot(len(var_pars), 1, i)
         else:
             ax = fig.add_subplot(len(var_pars), 1, i, sharex=ax_list[0])
 
-        ax.errorbar(phase, param.value, xerr=phase_err, yerr=[param.neg_err,
+        ax.errorbar(phase, param.value, yerr=[param.neg_err,
                 param.pos_err], lw=2, color=colours[i-1], drawstyle='steps-mid',
                 marker='.', ms=10, mec=colours[i-1], mfc=colours[i-1],
                 ecolor=colours[i-1], elinewidth=2, capsize=0)
 
-        # print np.shape(param.value)
-        # print np.shape(param.neg_err)
-        # print np.shape(param.pos_err)
-        # print np.shape(phase)
-
-        # print param.funcfit
-
         if param.funcfit is not None and param.funcfit is not np.nan:
-            # rect = patches.Rectangle((param_max-param.phase_err, ymin),
-            #         2*param.phase_err, ymax-ymin, color='pink', ec="none",
-            #         alpha=0.5)
-            # ax.add_patch(rect)
-            phase_width = np.round(2.0 * param.phase_err / 0.002, decimals=1)
+            if param.phi_max_err is not None:
+                phase_width = np.round(2.0 * param.phi_max_err / 0.002,
+                        decimals=1)
+            else:
+                phase_width = np.round(2.0 * param.phase_err / 0.002,
+                        decimals=1)
             # print phase_width
             # print 2*param.phase_err
             ax.plot(tinybins, param.funcfit, c='black', lw=2)
             ax.vlines(param_max, ymin, ymax, lw=phase_width, color='gray',
                     linestyles='dashed')
+            # ax.vlines(param_max+1, ymin, ymax, lw=phase_width, color='gray',
+            #         linestyles='dashed')
+            # ax.vlines(param_max+2, ymin, ymax, lw=phase_width, color='gray',
+            #         linestyles='dashed')
 
         ax.tick_params(axis='x', labelsize=18, bottom=True, top=True,
                 labelbottom=False, labeltop=False)
@@ -395,10 +413,15 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
         ax.set_ylabel(param.label, fontproperties=font_prop)
 
         ax.set_ylim(ymin, ymax)
+
         if num_spectra == 24:
             ax.set_xlim(0.0, 1.01)
-        else:
+        elif num_spectra == 47:
             ax.set_xlim(0.0, 2.01)
+        else:
+            ax.set_xlim(-1.0, 2.01)
+            # ax.set_xlim(0, 3.01)
+
         y_maj_loc = ax.get_yticks()
         y_min_mult = 0.25 * (y_maj_loc[1] - y_maj_loc[0])
         yLocator = MultipleLocator(y_min_mult)  ## loc of minor ticks on y-axis
@@ -410,11 +433,15 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
     ax_list[-1].set_xlabel('Normalized QPO phase', fontproperties=font_prop)
     if num_spectra == 24:
         ax_list[-1].set_xticks(np.arange(0, 1.05, 0.25))
-    else:
+    elif num_spectra == 47:
         ax_list[-1].set_xticks(np.arange(0, 2.05, 0.25))
+    else:
+        ax_list[-1].set_xticks(np.arange(-1.00, 2.05, 0.25))
+        # ax_list[-1].set_xticks(np.arange(0, 3.05, 0.25))
+
 
     ax_list[-1].xaxis.set_minor_locator(xLocator)
-    ax_list[-1].tick_params(axis='x', labelsize=18, bottom=True, top=True, \
+    ax_list[-1].tick_params(axis='x', labelsize=18, bottom=True, top=True, 
                 labelbottom=True, labeltop=False)
 
     ax_list[0].set_title(r'%s' % title, fontproperties=font_prop)
@@ -425,13 +452,14 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
 
     if not quiet:
         subprocess.call(['open', plot_file])
-    subprocess.call(['cp', plot_file, "/Users/abigailstevens/Dropbox/Research/CCF_paper1/"])
+    # subprocess.call(['cp', plot_file,
+    #         "/Users/abigailstevens/Dropbox/Research/CCF_paper1/"])
 
 
 ################################################################################
 def fit_function(t, p):
     """
-    Computing a function to fit to the SED parameter variations.
+    Computing a function to fit to the spectral parameter variations.
 
     Parameters
     ----------
@@ -464,8 +492,8 @@ def function_residuals(p, data, data_err, t):
         1-D array of the function parameters.
 
     data : np.array of floats
-        1-D array of the data we want to fit to; in this case, the list of SED
-        fit parameters over QPO phase.
+        1-D array of the data we want to fit to; in this case, the list of
+        spectral fit parameters over QPO phase.
 
     data_err : np.array of floats
         1-D array of the error on the data.
@@ -509,7 +537,7 @@ def get_phase(parameter, num_spectra, quiet):
         assigned.
 
     """
-    t = np.arange(num_spectra) / 23.646776
+    t = np.arange(num_spectra) / 23.5
     p = [1., 0., 1., 0., np.mean((np.min(parameter.value), \
             np.max(parameter.value)))]  ## Amplitude, phase shift, mean
 
@@ -550,9 +578,14 @@ def get_phase(parameter, num_spectra, quiet):
 
     parameter.best_fit = best_fit
     if num_spectra == 24:
-        parameter.funcfit = fit_function(np.arange(-0.02, 1.02, 0.01), best_fit)
+        parameter.funcfit = fit_function(np.arange(-0.02, 1.02, 0.001),
+                best_fit)
+    elif num_spectra == 47:
+        parameter.funcfit = fit_function(np.arange(-0.02, 2.02, 0.001),
+                best_fit)
     else:
-        parameter.funcfit = fit_function(np.arange(-0.02, 2.02, 0.01), best_fit)
+        parameter.funcfit = fit_function(np.arange(-1.02, 2.02, 0.001),
+                best_fit)
     parameter.phase = best_fit[1] / (2.0 * np.pi)
     parameter.phase_err = np.sqrt(cov_matrix[1][1]) / (2.0 * np.pi)
 
@@ -587,18 +620,18 @@ def write_varpars(varying_params, fitfunc_file, num_spec=24):
 
 
 ################################################################################
-def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
+def determine_varying_parameters(mod_parameters, n_spectra=24, quiet=False):
     """
-    Determines which SED parameters are varying with QPO phase, based on the log
-    file from XSPEC.
+    Determines which spectral parameters are varying with QPO phase, based on
+    the log file from XSPEC.
 
     Parameters
     ----------
-    mod_components : np.array of sed_pars.Parameter objects
-        1-D array of the components of the whole energy spectral model.
+    mod_parameters : np.array of sed_pars.Parameter objects
+        1-D array of the parameters of the whole energy spectral model.
 
     n_spectra : int
-        The number of SEDs in one QPO 'phase', being fit simultaneously. [24]
+        The number of spectra in one QPO cycle being fit simultaneously. [24]
 
     quiet : bool
         Flag to print output or not; if True, will print each parameter name
@@ -607,17 +640,17 @@ def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
     Returns
     -------
     var_pars : np.array of sed_pars.Parameter objects
-        1-D array of the SED components that vary with QPO phase.
+        1-D array of the spectral parameters that vary with QPO phase.
 
     """
     var_pars = np.array([])
-    for component in mod_components:
+    for parameter in mod_parameters:
         if not quiet:
-            print component.par_name, "mean:", np.mean(component.value)
-            print "\t", np.min(component.value), np.max(component.value)
-        if component.varying:
-            component = get_phase(component, n_spectra, quiet)
-            var_pars = np.append(var_pars, component)
+            print parameter.par_name, "mean:", np.mean(parameter.value)
+            print "\t", np.min(parameter.value), np.max(parameter.value)
+        if parameter.varying:
+            parameter = get_phase(parameter, n_spectra, quiet)
+            var_pars = np.append(var_pars, parameter)
         # print "%s %s phase: %.4f +- %.4f" % (parameter.mod_name, \
         #         parameter.par_name, parameter.phase, parameter.phase_err)
     return var_pars
@@ -626,9 +659,10 @@ def determine_varying_parameters(mod_components, n_spectra=24, quiet=False):
 ################################################################################
 def main(log_file, mod_string="", write_func="", quiet=False):
     """
-    Reads the XSPEC log file to get the component values, fits a function to the
-    varying SED parameters, writes those fit function parameters to a file (if
-    specified), and plots the varying parameters with their best-fit function.
+    Reads the XSPEC log file to get the parameter values, fits a function to the
+    varying spectral parameters, writes those fit function parameters to a file
+    (if specified), and plots the varying parameters with their best-fit
+    function.
 
     Parameters
     ------
@@ -642,7 +676,7 @@ def main(log_file, mod_string="", write_func="", quiet=False):
 
     write_func : str
         The full path of the text file to write the best-fitting function
-        parameters from the SED parameter variations to.
+        parameters from the spectral parameter variations to.
 
     quiet : bool
         If True, suppresses printing to the screen and will not open the plot
@@ -653,32 +687,32 @@ def main(log_file, mod_string="", write_func="", quiet=False):
     ## Reading in the log file to data arrays
     ##########################################
 
-    mod_components, num_spectra = read_log_file(log_file, quiet=quiet)
+    mod_parameters, num_spectra = read_log_file(log_file, quiet=quiet)
 
     ######################################################################
     ## Computing the phase of the best-fit function and phase difference
     ######################################################################
 
-    var_pars = determine_varying_parameters(mod_components, \
+    var_pars = determine_varying_parameters(mod_parameters, \
             n_spectra=num_spectra, quiet=quiet)
 
     if write_func != "":
-        if not quiet:
-            print("Writing function parameters to: %s" % write_func)
+        # if not quiet:
+        #     print("Writing function parameters to: %s" % write_func)
         with open(write_func, 'a') as out:
             out.write("%s    " % (mod_string))
-            for component in mod_components:
-                if component.varying:
-                    # print component.best_fit
+            for parameter in mod_parameters:
+                if parameter.varying:
+                    # print parameter.best_fit
                     try:
                         out.write("[%.4e,%.4e,%.4e,%.4e,%.4e]    " % \
-                                (component.best_fit[0], component.best_fit[1], \
-                                 component.best_fit[2], component.best_fit[3], \
-                                 component.best_fit[4]))
+                                (parameter.best_fit[0], parameter.best_fit[1],
+                                 parameter.best_fit[2], parameter.best_fit[3],
+                                 parameter.best_fit[4]))
                     except TypeError:
                         out.write("[nan,nan,nan,nan,nan]    ")
                 else:
-                    out.write("%.4e    " % component.value[0])
+                    out.write("%.4e    " % parameter.value[0])
             out.write("\n")
 
     #################################################################
@@ -687,7 +721,12 @@ def main(log_file, mod_string="", write_func="", quiet=False):
 
     if len(var_pars) >= 1:
         plot_name = log_file.replace('.log', '.eps')
-        make_var_plots(plot_name, num_spectra, var_pars, quiet)
+        model_name = mod_string.upper()
+        model_name = model_name.replace("PHABS*", "PHABS$\\times\\,$")
+        model_name = model_name.replace("*", " * ")
+        model_name = model_name.replace("+", " + ")
+        make_var_plots(plot_name, num_spectra, var_pars, quiet=quiet,
+                title=model_name)
     else:
         print("\tNo parameters are varying. Nothing to plot.")
 

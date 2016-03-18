@@ -34,6 +34,10 @@ class Parameter(object):
         self.best_fit = None
         self.phase = None
         self.phase_err = None
+        self.phi_max = None
+        self.phi_max_err = None
+        self.phi_min = None
+        self.phi_min_err = None
 
     def __str__(self):
         return "%s" % (self.label)
@@ -46,7 +50,7 @@ class Phabs(object):
     def __init__(self):
         self.mod_name = "phabs"
         self.nH = Parameter(self.mod_name,
-                label=r"phabs: nH ($\times 10^{22}$)", par_name="nH")
+                label=r"phabs $N_H$ ($\times 10^{22}$)", par_name="nH")
 
     def __str__(self):
         return "%s" % (self.mod_name)
@@ -60,9 +64,9 @@ class Simpl(object):
         self.mod_name = "simpl "
         self.Gamma = Parameter(self.mod_name, label="PL photon index",
                 par_name="Gamma")
-        self.FracSctr = Parameter(self.mod_name, label="PL normalization",
+        self.FracSctr = Parameter(self.mod_name, label="PL $F_{scatt}$ (norm)",
                 par_name="FracSctr")
-        self.UpScOnly = Parameter(self.mod_name, label="simpl: UpScOnly",
+        self.UpScOnly = Parameter(self.mod_name, label="simpl UpScOnly",
                 par_name="UpScOnly")
 
     def __str__(self):
@@ -75,15 +79,11 @@ class Simpl(object):
 class Simpler(object):
     def __init__(self):
         self.mod_name = "simpler"
-        # self.Gamma = Parameter(self.mod_name, label="simpler: Gamma",
-        #         par_name="Gamma")
-        # self.FracSctr = Parameter(self.mod_name, label="simpler: FracSctr",
-        #         par_name="FracSctr")
-        self.UpScOnly = Parameter(self.mod_name, label="simpler: UpScOnly",
+        self.UpScOnly = Parameter(self.mod_name, label="simpler UpScOnly",
                 par_name="UpScOnly")
         self.Gamma = Parameter(self.mod_name, label="PL photon index",
                 par_name="Gamma")
-        self.FracSctr = Parameter(self.mod_name, label="PL normalization",
+        self.FracSctr = Parameter(self.mod_name, label="PL scattering fraction",
                 par_name="FracSctr")
 
 
@@ -97,17 +97,17 @@ class Simpler(object):
 class Nthcomp(object):
     def __init__(self):
         self.mod_name = "nthComp"
-        self.Gamma = Parameter(self.mod_name, label="nthComp: Gamma",
+        self.Gamma = Parameter(self.mod_name, label="nthComp photon index",
                 par_name="Gamma")
         self.kT_e = Parameter(self.mod_name,
-                label=r"nthComp: kT$_{e}$ (keV)", par_name="kT_e")
+                label=r"nthComp temp (keV)", par_name="kT_e")
         self.kT_bb = Parameter(self.mod_name,
                 label=r"nthComp: kT$_{bb}$ (keV)", par_name="kT_bb")
-        self.inp_type = Parameter(self.mod_name, label="nthComp: inp type",
+        self.inp_type = Parameter(self.mod_name, label="nthComp inp type",
                 par_name="inp_type")
-        self.Redshift = Parameter(self.mod_name, label="nthComp: Redshift",
+        self.Redshift = Parameter(self.mod_name, label="nthComp Redshift",
                 par_name="Redshift")
-        self.norm = Parameter(self.mod_name, label="nthComp: norm",
+        self.norm = Parameter(self.mod_name, label="nthComp norm",
                 par_name="norm")
 
     def __str__(self):
@@ -120,13 +120,9 @@ class Nthcomp(object):
 class Diskbb(object):
     def __init__(self):
         self.mod_name = "diskbb"
-        # self.Tin = Parameter(self.mod_name,
-        #         label=r"diskbb: T$_{in}$ (keV)", par_name="Tin")
-        # self.norm = Parameter(self.mod_name, label="diskbb: norm",
-        #         par_name="norm")
-        self.Tin = Parameter(self.mod_name, label="BB temperature (keV)", \
+        self.Tin = Parameter(self.mod_name, label="Disk temp (keV)", \
                 par_name="Tin")
-        self.norm = Parameter(self.mod_name, label="BB normalization",
+        self.norm = Parameter(self.mod_name, label="Disk norm",
                 par_name="norm")
 
     def __str__(self):
@@ -139,10 +135,11 @@ class Diskbb(object):
 class Diskpbb(object):
     def __init__(self):
         self.mod_name = "diskpbb"
-        self.Tin = Parameter(self.mod_name, label=r"diskpbb: T$_{in}$ (keV)",
+        self.Tin = Parameter(self.mod_name, label=r"DiskP temp (keV)",
                 par_name="Tin")
-        self.p = Parameter(self.mod_name, label="diskpbb: p", par_name=" p ")
-        self.norm = Parameter(self.mod_name, label="diskpbb: norm",
+        self.p = Parameter(self.mod_name, label="DiskP exponent", \
+                par_name=" p ")
+        self.norm = Parameter(self.mod_name, label="DiskP norm",
                 par_name="norm")
 
     def __str__(self):
@@ -155,9 +152,9 @@ class Diskpbb(object):
 class Bbodyrad(object):
     def __init__(self):
         self.mod_name = "bbodyrad"
-        self.kT = Parameter(self.mod_name, label="BB temperature (keV)",
+        self.kT = Parameter(self.mod_name, label="BB temp (keV)",
                 par_name="kT")
-        self.norm = Parameter(self.mod_name, label="BB normalization",
+        self.norm = Parameter(self.mod_name, label="BB norm",
                 par_name="norm")
 
     def __str__(self):
@@ -174,7 +171,7 @@ class Gaussian(object):
                 par_name="LineE")
         self.Sigma = Parameter(self.mod_name, label="Equivalent width (keV)",
                 par_name="Sigma")
-        self.norm = Parameter(self.mod_name, label="Line normalization",
+        self.norm = Parameter(self.mod_name, label="Line norm",
                 par_name="norm")
 
     def __str__(self):
@@ -187,9 +184,9 @@ class Gaussian(object):
 class Diskline(object):
     def __init__(self):
         self.mod_name = "diskline"
-        self.LineE = Parameter(self.mod_name, label=r"diskline: LineE (keV)",
+        self.LineE = Parameter(self.mod_name, label=r"Diskline energy (keV)",
                 par_name="LineE")
-        self.norm = Parameter(self.mod_name, label=r"diskline: norm",
+        self.norm = Parameter(self.mod_name, label=r"Diskline norm",
                 par_name="norm")
 
     def __str__(self):
@@ -202,9 +199,9 @@ class Diskline(object):
 class Cutoffpl(object):
     def __init__(self):
         self.mod_name = "cutoffpl"
-        self.PhoIndex = Parameter(self.mod_name, label=r"cutoffpl: PhoIndex",
+        self.PhoIndex = Parameter(self.mod_name, label=r"Cut-off PL photon index",
                 par_name="PhoIndex")
-        self.norm = Parameter(self.mod_name, label=r"cutoffpl: norm",
+        self.norm = Parameter(self.mod_name, label=r"Cut-off PL norm",
                 par_name="norm")
 
     def __str__(self):

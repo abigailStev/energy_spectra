@@ -441,7 +441,7 @@ def make_var_plots(plot_file, num_spectra, var_pars, quiet=False, title=" "):
 
 
     ax_list[-1].xaxis.set_minor_locator(xLocator)
-    ax_list[-1].tick_params(axis='x', labelsize=18, bottom=True, top=True, 
+    ax_list[-1].tick_params(axis='x', labelsize=18, bottom=True, top=True,
                 labelbottom=True, labeltop=False)
 
     ax_list[0].set_title(r'%s' % title, fontproperties=font_prop)

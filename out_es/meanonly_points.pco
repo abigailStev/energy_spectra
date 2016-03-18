@@ -1,10 +1,10 @@
-r x 3 20
+r x 3 21
 r y %1% %2%
 lw 3
 ma 1 on 1
 lw 5 on 1
 ma size 2 on 1
-co 6 on 1
+co 1 on 1
 la T
 time off
 cs 1.3

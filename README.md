@@ -1,24 +1,24 @@
 # energy_spectra
 
 Takes a two-dimensional cross correlation function (CCF) and writes multiple 
-spectral energy distributions (SEDs) from it (per specified phase bin). Fits 
-multiple SEDs simultaneously with XSPEC, and fits a function to those SED 
-parameter variations.
-
-## Authors
-* Abigail Stevens (UvA)
+energy spectra from it (per specified phase bin). Fits multiple energy spectra
+simultaneously with XSPEC, and fits a function to those spectral
+parameter variations. Please see [Stevens & Uttley 2016](https://ui.adsabs.harvard.edu/#abs/2016MNRAS.460.2796S/abstract)
+for reference.
 
 ## Contents
 
 ### energyspec.py
 Takes CCF amplitudes of a specific time bin and writes them to a file. Can make
-only a mean SED (of just the mean count rate per channel of interest), mean + 
-ccf for a phase-resolved SED, or only the ccf for a deviation of each phase-
-resolved SEDs from the mean SED. Units should be photon count rate.
+only a mean spectrum (of just the mean count rate per channel of interest), mean
++ ccf for a phase-resolved spectrum, or only the ccf for a deviation of each
+phase-resolved spectrum from the mean spectrum. Units should be photon count
+rate.
 
-### run_energyspec.sh
-Bash script to run energyspec.py and make and run XSPEC scripts to make plots of
-the SEDs.
+### multifit_plots.py
+Reads the xspec log file to plot how the untied spectral parameters change with
+QPO phase. Fits the changing spectral parameters with a sinusoid+harmonic
+function and gets the 'phase' of each parameter variation.
 
 ### out_es/ccfonly.pco
 A QDP style file for plotting the ccf deviations with stepped lines.
@@ -27,34 +27,35 @@ A QDP style file for plotting the ccf deviations with stepped lines.
 A QDP style file for plotting the ccf deviations with unconnected points.
 
 ### out_es/ccfwmean.pco
-A QDP style file for plotting the mean+ccf (i.e. phase-resolved SED) with 
+A QDP style file for plotting the mean+ccf (i.e. phase-resolved spectra) with
 stepped lines.
 
 ### out_es/ccfwmean_points.pco
-A QDP style file for plotting the mean+ccf (i.e. phase-resolved SED) with 
+A QDP style file for plotting the mean+ccf (i.e. phase-resolved spectra) with
 unconnected points.
 
-### sed_fitting.sh
-Simultaneously fits multiple energy spectra (SEDs) from different points in the 
+### phasespec_fitting.sh
+Simultaneously fits multiple energy spectra from different points in the
 QPO phase. Makes the phase-resolved energy spectra, writes the xspec script, 
 runs the xspec script, outputs to a log file.
 
-### multifit_plots.py
-Reads the xspec log file to plot how the untied SED parameters change with QPO 
-phase. Fits the changing SED parameters with a function and gets the 'phase' of 
-each parameter variation.
+### run_energyspec.sh
+Bash script to run energyspec.py and make and run XSPEC scripts to make plots of
+the spectra.
 
+ [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
+
+## Authors
+* Abigail Stevens (UvA)
 
 ## Copyright
  
-All content © 2014-2015 the authors. The code is distributed under the MIT 
+All content © 2014-2017 the Authors, and is distributed under the MIT
 license. See LICENSE.md for details.
 
-If you use this code, please cite the paper as well as the code's Zenodo DOI! 
-Stevens et al. 2015
+If you use this code, please cite [Stevens & Uttley 2016](https://ui.adsabs.harvard.edu/#abs/2016MNRAS.460.2796S/abstract).
 
-Pull requests are welcome! If you are interested in the further development of 
-energy_spectra, please [get in touch via the issues](https://github.com/abigailStev/energy_spectra/issues)!
+The functionality of this software will be folded into [Stingray](http://stingraysoftware.github.io/),
+so please get involved there.
 
 
- [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/) 

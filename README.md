@@ -10,10 +10,10 @@ for reference.
 
 ### energyspec.py
 Takes CCF amplitudes of a specific time bin and writes them to a file. Can make
-only a mean spectrum (of just the mean count rate per channel of interest), mean
-+ ccf for a phase-resolved spectrum, or only the ccf for a deviation of each
-phase-resolved spectrum from the mean spectrum. Units should be photon count
-rate.
+only a mean spectrum (of just the mean count rate per channel of interest),
+mean+ccf for a phase-resolved spectrum, or only the ccf for a deviation of
+each phase-resolved spectrum from the mean spectrum. Units should be photon
+count rate.
 
 ### multifit_plots.py
 Reads the xspec log file to plot how the untied spectral parameters change with
@@ -43,7 +43,7 @@ runs the xspec script, outputs to a log file.
 Bash script to run energyspec.py and make and run XSPEC scripts to make plots of
 the spectra.
 
- [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
+[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
 ## Authors
 * Abigail Stevens (UvA)
@@ -56,6 +56,6 @@ license. See LICENSE.md for details.
 If you use this code, please cite [Stevens & Uttley 2016](https://ui.adsabs.harvard.edu/#abs/2016MNRAS.460.2796S/abstract).
 
 The functionality of this software will be folded into [Stingray](http://stingraysoftware.github.io/),
-so please get involved there.
+so please get involved over there!
 
 
